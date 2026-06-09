@@ -44,6 +44,8 @@ document.addEventListener("DOMContentLoaded",function(){
   window._fsHelpers = { collection, getDocs, setDoc, doc, deleteDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy, storageRef, uploadBytes, getDownloadURL };
 
   console.log("✅ Firebase initialised — Firestore & Storage ready");
+  window._firebaseReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
 
@@ -1698,6 +1700,12 @@ let userDB = [
   { username:'FH0001/21', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ፍሬወይኒ ኃ/ሚ',   active:true, studentId:'FH0001/21' },
 ];
 
+// Wait for Firebase module to finish loading before using it
+function waitForFirebase() {
+  if (window._firebaseReady) return Promise.resolve();
+  return new Promise(resolve => window.addEventListener('firebase-ready', resolve, { once: true }));
+}
+
 let loginAttempts = 0;
 const MAX_ATTEMPTS = 5;
 let lockoutUntil = 0;
@@ -1735,8 +1743,8 @@ async function doLogin() {
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = '⏳ Checking…'; }
 
-  // Try to load latest passwords from Firebase (non-blocking — fall back to local if Firebase not ready)
-  try { await loadUsersFromFirebase(); } catch(e) { /* Firebase not ready yet — use local userDB */ }
+  // Wait for Firebase to be ready, then load latest passwords
+  try { await waitForFirebase(); await loadUsersFromFirebase(); } catch(e) { /* Fall back to local userDB */ }
 
   // Re-enable button
   if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '☩ Enter / ግቡ'; }
@@ -1805,7 +1813,7 @@ async function doLogin() {
   if (user.role === 'student' && user.studentId) loadStudentProfile(user.studentId);
 
   // Load Firebase data in background after login succeeds
-  loadStudentsFromFirebase().then(() => {
+  waitForFirebase().then(() => loadStudentsFromFirebase()).then(() => {
     buildStudentsTable(students);
     buildAttendance();
     buildGrades();
@@ -1860,8 +1868,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (user.role === 'student' && user.studentId) loadStudentProfile(user.studentId);
 
     // ── LOAD FROM FIREBASE on restore ──
-    loadUsersFromFirebase();
-    loadStudentsFromFirebase().then(() => {
+    waitForFirebase().then(() => {
+      loadUsersFromFirebase();
+      return loadStudentsFromFirebase();
+    }).then(() => {
       buildStudentsTable(students);
       buildAttendance();
       buildGrades();
