@@ -3332,7 +3332,7 @@ async function saveStudentsToFirebase() {
     for (const s of students) {
       const data = { ...s };
       if (data.photo && data.photo.startsWith('blob:')) delete data.photo;
-      await setDoc(doc(window._db, 'students', s.id), data);
+      await setDoc(doc(window._db, 'students', s.id.replace(/\//g, '_')), data);
     }
     showToast('☩ Students saved to Firebase / ተማሪዎች ተቀምጠዋል');
   } catch (err) {
@@ -3347,7 +3347,7 @@ async function loadStudentsFromFirebase() {
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'students'));
     if (snap.empty) return;
-    const loaded = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const loaded = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id.replace(/_/g, '/') }));
     loaded.forEach(remote => {
       const idx = students.findIndex(s => s.id === remote.id);
       if (idx !== -1) students[idx] = remote;
