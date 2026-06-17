@@ -3294,8 +3294,8 @@ async function uploadPhotoToFirebase(file, studentId) {
 
 // ── SAVE/LOAD USERS (passwords) TO/FROM FIREBASE ─────────────
 async function saveUsersToFirebase() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
     for (const u of userDB) {
       const safeId = u.username.replace(/\//g, '_');
@@ -3308,8 +3308,8 @@ async function saveUsersToFirebase() {
 }
 
 async function loadUsersFromFirebase() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'users'));
     if (snap.empty) return;
@@ -3317,9 +3317,14 @@ async function loadUsersFromFirebase() {
       const data = d.data();
       const idx = userDB.findIndex(u => u.username === data.username);
       if (idx !== -1) {
-        // Only update pwHash — don't overwrite roles/names defined in code
         userDB[idx].pwHash = data.pwHash;
         userDB[idx].active = data.active;
+      } else {
+        // Add newly registered students from Firebase
+        userDB.push({
+          username: data.username, pwHash: data.pwHash, role: data.role,
+          name: data.name, active: data.active, studentId: data.studentId || null
+        });
       }
     });
   } catch (err) { console.error('loadUsersFromFirebase error:', err); }
@@ -3447,8 +3452,8 @@ async function loadAssignmentsFromFirebase() {
 
 // ── SAVE ATTENDANCE ── also update student.att % in students array ──
 async function saveAttendanceToFirebase(date, course, records) {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
     const docId = (date + '_' + course).replace(/[^\w\u1200-\u137F]/g, '-');
     await setDoc(doc(window._db, 'attendance', docId), {
@@ -3467,8 +3472,8 @@ async function saveAttendanceToFirebase(date, course, records) {
 
 // Recalculate att% for all students from stored attendance records
 async function recalcStudentAttendance() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { collection, getDocs, setDoc, doc } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'attendance'));
     if (snap.empty) return;
@@ -3492,7 +3497,7 @@ async function recalcStudentAttendance() {
       const newAtt = Math.round(st.pts / st.total * 100);
       if (s.att !== newAtt) {
         s.att = newAtt;
-        await setDoc(doc(window._db, 'students', s.id), { ...s }, { merge: true });
+        await setDoc(doc(window._db, 'students', s.id.replace(/\//g, '_')), { ...s }, { merge: true });
       }
     }
     buildStudentsTable(students);
@@ -3501,8 +3506,8 @@ async function recalcStudentAttendance() {
 }
 
 async function saveGradesToFirebase() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
     const rows = document.querySelectorAll('#grades-table tr');
     rows.forEach((row, i) => {
@@ -3517,12 +3522,12 @@ async function saveGradesToFirebase() {
     });
     for (const s of students) {
       // Save grades doc
-      await setDoc(doc(window._db, 'grades', s.id), {
+      await setDoc(doc(window._db, 'grades', s.id.replace(/\//g, '_')), {
         studentId: s.id, studentName: s.name, grades: s.grades || [],
         grade: s.grade, updatedBy: currentUsername, updatedAt: new Date().toISOString()
       });
       // Also update student record with computed grade
-      await setDoc(doc(window._db, 'students', s.id), { grade: s.grade, grades: s.grades || [] }, { merge: true });
+      await setDoc(doc(window._db, 'students', s.id.replace(/\//g, '_')), { grade: s.grade, grades: s.grades || [] }, { merge: true });
     }
     buildStudentsTable(students);
     buildGrades();
