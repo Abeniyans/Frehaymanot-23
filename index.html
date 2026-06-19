@@ -659,7 +659,7 @@ tr:hover td{background:rgba(245,237,216,0.5);}
 <!-- ══════════ APP ══════════ -->
 <div id="app">
   <div class="topbar">
-    <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" style="display:none"><span></span><span></span><span></span></button>
     <div style="flex:1;text-align:center">
       <div class="topbar-logo" style="display:flex;align-items:center;gap:8px;"><div style="display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border-radius:50%;padding:3px;border:1.5px solid rgba(200,149,42,0.4);box-shadow:0 3px 16px rgba(0,0,0,0.28);"><img class="church-photo" style="width:24px;height:24px;object-fit:cover;border-radius:50%;display:block;"></div> ፍሬ ሃይማኖት <span class="topbar-sub">ሰንበት ትምህርት ቤት</span></div>
     </div>
@@ -1142,11 +1142,11 @@ tr:hover td{background:rgba(245,237,216,0.5);}
           <div class="id-card-top"></div>
           <div style="text-align:center;padding:8px 0 0;"><div style="display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border-radius:50%;padding:3px;border:2.5px solid rgba(200,149,42,0.6);box-shadow:0 3px 16px rgba(0,0,0,0.28);"><img class="church-photo" style="width:44px;height:44px;object-fit:cover;border-radius:50%;display:block;"></div></div>
           <div class="school">ፍሬ-ሃይማኖት · የሰንበት ትምህርት ቤት</div>
-          <div class="id-avatar" id="idc-avatar">AB</div>
-          <div class="id-name" id="idc-name">Abebe Girma</div>
+          <div class="id-avatar" id="idc-avatar"></div>
+          <div class="id-name" id="idc-name"></div>
           <div class="id-role">Student / ተማሪ</div>
-          <div class="id-num" id="idc-id">ID: FH0001/13</div>
-          <div class="id-course" id="idc-course">Bible Basics</div>
+          <div class="id-num" id="idc-id"></div>
+          <div class="id-course" id="idc-course"></div>
         </div>
         <div>
           <div class="card" style="width:280px">
@@ -1391,23 +1391,17 @@ tr:hover td{background:rgba(245,237,216,0.5);}
             <div class="id-card-top"></div>
             <div style="text-align:center;padding:8px 0 0;"><div style="display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border-radius:50%;padding:3px;border:2.5px solid rgba(200,149,42,0.6);box-shadow:0 3px 16px rgba(0,0,0,0.28);"><img class="church-photo" style="width:36px;height:36px;object-fit:cover;border-radius:50%;display:block;"></div></div>
             <div class="school">ፍሬ-ሃይማኖት · የሰንበት ትምህርት ቤት</div>
-            <div class="id-avatar">AB</div>
-            <div class="id-name">Abebe Girma</div>
+            <div class="id-avatar" id="profile-avatar"></div>
+            <div class="id-name" id="profile-name"></div>
             <div class="id-role">Student / ተማሪ</div>
-            <div class="id-num">ID: FH0001/13</div>
-            <div class="id-course">Bible Basics</div>
+            <div class="id-num" id="profile-id"></div>
+            <div class="id-course" id="profile-course"></div>
           </div>
           <div class="card">
             <div class="card-title">☩ Attendance / አቴንዳንስ </div>
             <div class="table-wrap"><table>
               <thead><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr><td>May 4, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
-                <tr><td>Apr 27, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
-                <tr><td>Apr 20, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
-                <tr><td>Apr 13, 2025</td><td>Bible Basics</td><td><span class="badge badge-red">Absent</span></td></tr>
-                <tr><td>Apr 6, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
-              </tbody>
+              <tbody id="profile-att-tbody"><tr><td colspan="3" style="text-align:center;color:var(--muted)">Loading…</td></tr></tbody>
             </table></div>
           </div>
         </div>
@@ -1416,22 +1410,13 @@ tr:hover td{background:rgba(245,237,216,0.5);}
             <div class="card-title">☩ My Grades / የኔ ውጤቶች</div>
             <div class="table-wrap"><table>
               <thead><tr><th>Course</th><th>Midterm</th><th>Final</th><th>Avg</th></tr></thead>
-              <tbody>
-                <tr><td>Bible Basics</td><td>78</td><td>85</td><td><span class="badge badge-gold">81.5</span></td></tr>
-              </tbody>
+              <tbody id="profile-grades-tbody"><tr><td colspan="4" style="text-align:center;color:var(--muted)">Loading…</td></tr></tbody>
             </table></div>
           </div>
           <div class="card">
             <div class="card-title">☩ My Assignments / የቤት ስራ</div>
-            <div class="assign-card">
-              <div class="assign-title">Book of Genesis — Summary</div>
-              <div class="assign-meta">Due: May 18, 2025 · <span class="badge badge-gold">Pending</span></div>
-              <div class="assign-desc">Write a 1-page summary of Genesis chapters 1–10.</div>
-            </div>
-            <div class="assign-card">
-              <div class="assign-title">Psalm 23 — Memorization</div>
-              <div class="assign-meta">Due: May 25, 2025 · <span class="badge badge-green">Submitted</span></div>
-              <div class="assign-desc">Memorize and recite Psalm 23 in full.</div>
+            <div id="profile-assignments">
+              <div style="color:var(--muted);font-style:italic;padding:10px 0">Loading…</div>
             </div>
           </div>
           <!-- ══ CHANGE PASSWORD CARD (students only) ══ -->
@@ -1568,18 +1553,8 @@ function generateStudentId(memberSince, allStudents) {
   return 'FH' + seq + '/' + yr;
 }
 
-const students = [
-  { id:'FH0001/13', memberSince:'2013-01-01', name:'አበበ ግርማ',    christian:'ጊዮርጊስ',   course:'ማዕከላዉያን 1 — ቀዳማይ',         age:14, gender:'ወንድ', phone:'+251911234567', att:92, grade:81 },
-  { id:'FH0001/15', memberSince:'2015-03-08', name:'ትግስት ኃይሌ',   christian:'ማርያም',    course:'ማዕከላዉያን 2 — ካልዓይ',          age:16, gender:'ሴት',  phone:'+251922345678', att:88, grade:90 },
-  { id:'FH0001/18', memberSince:'2018-09-15', name:'ሳሙኤል ተስፋዬ', christian:'ሚካኤል',    course:'ሕፃናት 1ሀ',                    age:8,  gender:'ወንድ', phone:'+251933456789', att:75, grade:72 },
-  { id:'FH0002/15', memberSince:'2015-06-20', name:'ሜሮን በቀለ',    christian:'ሣራ',       course:'ማዕከላዉያን 2 — ሣልሳይ',          age:17, gender:'ሴት',  phone:'+251944567890', att:95, grade:88 },
-  { id:'FH0001/19', memberSince:'2019-02-10', name:'ዳዊት አለሙ',    christian:'ዘካርያስ',   course:'ሕፃናት 2ሀ',                    age:10, gender:'ወንድ', phone:'+251955678901', att:60, grade:65 },
-  { id:'FH0002/18', memberSince:'2018-11-03', name:'ሃና ታደሰ',     christian:'ሩት',       course:'ማዕከላዉያን 1 — ቀዳማይ መግቢያ',   age:13, gender:'ሴት',  phone:'+251966789012', att:84, grade:79 },
-  { id:'FH0001/20', memberSince:'2020-01-19', name:'ዮሐንስ ከበደ',  christian:'ጴጥሮስ',   course:'መቆያ',                          age:5,  gender:'ወንድ', phone:'+251977890123', att:90, grade:0  },
-  { id:'FH0003/18', memberSince:'2018-04-07', name:'ሰሎሜ ደሳለኝ',  christian:'ሔዋን',     course:'ሕፃናት 1ለ',                    age:7,  gender:'ሴት',  phone:'+251988901234', att:78, grade:68 },
-  { id:'FH0002/13', memberSince:'2013-07-25', name:'ቴዎድሮስ አሰፋ', christian:'ቴዎድሮስ',  course:'ማዕከላዉያን 2 — ራብዓይ',          age:18, gender:'ወንድ', phone:'+251999012345', att:85, grade:77 },
-  { id:'FH0001/21', memberSince:'2021-05-30', name:'ፍሬወይኒ ኃ/ሚ', christian:'ሃና',       course:'ሕፃናት 2ለ',                    age:9,  gender:'ሴት',  phone:'+251900123456', att:93, grade:82 },
-];
+const students = [];
+// Students are loaded from Firebase on login — no hardcoded data
 
 // ── ROLE-BASED NAVIGATION ─────────────────────────────────────
 const navMenus = {
@@ -1683,21 +1658,11 @@ function simpleHash(str) {
 // User database — created/managed by admin
 // Passwords are stored hashed. Plain shown only in hint for demo.
 let userDB = [
-  { username:'admin',    pwHash: simpleHash('Admin@2024!'),       role:'admin',   name:'Admin User',   active:true },
-  { username:'teacher1', pwHash: simpleHash('Teach@123'),          role:'teacher', name:'ድ/ር ማርታ',     active:true, studentId:null },
-  { username:'teacher2', pwHash: simpleHash('Teach@456'),          role:'teacher', name:'ዲ/ን ዳንኤል',    active:true, studentId:null },
-  { username:'monitor1', pwHash: simpleHash('Monitor@123'),        role:'monitor', name:'ወ/ሮ ሳሙኤል',    active:true, studentId:null },
-  // Students: username = Student ID,  password = Senbet@2024 (default for all)
-  { username:'FH0001/13', pwHash: simpleHash('Senbet@2024'), role:'student', name:'አበበ ግርማ',       active:true, studentId:'FH0001/13' },
-  { username:'FH0001/15', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ትግስት ኃይሌ',      active:true, studentId:'FH0001/15' },
-  { username:'FH0001/18', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሳሙኤል ተስፋዬ',    active:true, studentId:'FH0001/18' },
-  { username:'FH0002/15', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሜሮን በቀለ',       active:true, studentId:'FH0002/15' },
-  { username:'FH0001/19', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ዳዊት አለሙ',       active:true, studentId:'FH0001/19' },
-  { username:'FH0002/18', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሃና ታደሰ',        active:true, studentId:'FH0002/18' },
-  { username:'FH0001/20', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ዮሐንስ ከበደ',     active:true, studentId:'FH0001/20' },
-  { username:'FH0003/18', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሰሎሜ ደሳለኝ',     active:true, studentId:'FH0003/18' },
-  { username:'FH0002/13', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ቴዎድሮስ አሰፋ',    active:true, studentId:'FH0002/13' },
-  { username:'FH0001/21', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ፍሬወይኒ ኃ/ሚ',   active:true, studentId:'FH0001/21' },
+  { username:'admin',    pwHash: simpleHash('Admin@2024!'),  role:'admin',   name:'Admin User', active:true },
+  { username:'teacher1', pwHash: simpleHash('Teach@123'),    role:'teacher', name:'ድ/ር ማርታ',   active:true, studentId:null },
+  { username:'teacher2', pwHash: simpleHash('Teach@456'),    role:'teacher', name:'ዲ/ን ዳንኤል',  active:true, studentId:null },
+  { username:'monitor1', pwHash: simpleHash('Monitor@123'),  role:'monitor', name:'ወ/ሮ ሳሙኤል',  active:true, studentId:null },
+  // Student accounts are loaded from Firebase — not hardcoded here
 ];
 
 // Wait for Firebase module to finish loading before using it
@@ -1810,17 +1775,30 @@ async function doLogin() {
   buildUserManagementTable();
   document.getElementById('att-date').valueAsDate = new Date();
 
-  if (user.role === 'student' && user.studentId) loadStudentProfile(user.studentId);
-
-  // Load Firebase data in background after login succeeds
-  waitForFirebase().then(() => loadStudentsFromFirebase()).then(() => {
-    buildStudentsTable(students);
-    buildAttendance();
-    buildGrades();
-    loadGradesFromFirebase();
-    loadEventsFromFirebase();
-    loadAssignmentsFromFirebase();
-  });
+  if (user.role === 'student' && user.studentId) {
+    // Load Firebase first so profile has real data
+    waitForFirebase().then(() => loadStudentsFromFirebase()).then(() => {
+      loadStudentProfile(user.studentId);
+      buildStudentsTable(students);
+      buildAttendance();
+      buildGrades();
+      loadGradesFromFirebase();
+      loadEventsFromFirebase();
+      loadAssignmentsFromFirebase();
+      updateDashStats(user);
+    });
+  } else {
+    // Load Firebase data in background after login succeeds
+    waitForFirebase().then(() => loadStudentsFromFirebase()).then(() => {
+      buildStudentsTable(students);
+      buildAttendance();
+      buildGrades();
+      loadGradesFromFirebase();
+      loadEventsFromFirebase();
+      loadAssignmentsFromFirebase();
+      updateDashStats(user);
+    });
+  }
   listenChatRoom('general');
 
   showPage('dashboard');
@@ -1865,20 +1843,35 @@ document.addEventListener('DOMContentLoaded', function() {
     buildUserManagementTable();
     document.getElementById('att-date').valueAsDate = new Date();
 
-    if (user.role === 'student' && user.studentId) loadStudentProfile(user.studentId);
-
-    // ── LOAD FROM FIREBASE on restore ──
-    waitForFirebase().then(() => {
-      loadUsersFromFirebase();
-      return loadStudentsFromFirebase();
-    }).then(() => {
-      buildStudentsTable(students);
-      buildAttendance();
-      buildGrades();
-      loadGradesFromFirebase();
-      loadEventsFromFirebase();
-      loadAssignmentsFromFirebase();
-    });
+    if (user.role === 'student' && user.studentId) {
+      waitForFirebase().then(() => {
+        loadUsersFromFirebase();
+        return loadStudentsFromFirebase();
+      }).then(() => {
+        loadStudentProfile(user.studentId);
+        buildStudentsTable(students);
+        buildAttendance();
+        buildGrades();
+        loadGradesFromFirebase();
+        loadEventsFromFirebase();
+        loadAssignmentsFromFirebase();
+        updateDashStats(user);
+      });
+    } else {
+      // ── LOAD FROM FIREBASE on restore ──
+      waitForFirebase().then(() => {
+        loadUsersFromFirebase();
+        return loadStudentsFromFirebase();
+      }).then(() => {
+        buildStudentsTable(students);
+        buildAttendance();
+        buildGrades();
+        loadGradesFromFirebase();
+        loadEventsFromFirebase();
+        loadAssignmentsFromFirebase();
+        updateDashStats(user);
+      });
+    }
     listenChatRoom('general');
 
     showPage('dashboard');
@@ -1933,19 +1926,57 @@ function applyRoleUI(role, rc) {
   // Grades — disable inputs for students
   document.querySelectorAll('.grade-input').forEach(inp => { inp.disabled = !rc.canEditGrades; });
 
-  // Dashboard stats — show different stats per role
+  // Dashboard stats — show skeleton, real values filled by updateDashStats after Firebase loads
   if (role === 'student') {
     document.getElementById('dash-stats').innerHTML = `
-      <div class="stat-card s1" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value">92%</div><div class="stat-sub">This term</div></div>
-      <div class="stat-card s3" data-icon="📊"><div class="stat-label">My Grade</div><div class="stat-value">81.5</div><div class="stat-sub">Bible Basics avg</div></div>
-      <div class="stat-card s4" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value">2</div><div class="stat-sub">1 pending</div></div>
-      <div class="stat-card s2" data-icon="📅"><div class="stat-label">Events</div><div class="stat-value">4</div><div class="stat-sub">This month</div></div>`;
-  } else if (role === 'teacher') {
+      <div class="stat-card s1" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value" id="ds-att">—</div><div class="stat-sub">This term</div></div>
+      <div class="stat-card s3" data-icon="📊"><div class="stat-label">My Grade</div><div class="stat-value" id="ds-grade">—</div><div class="stat-sub">Average</div></div>
+      <div class="stat-card s4" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value" id="ds-assign">—</div><div class="stat-sub" id="ds-assign-sub">Loading…</div></div>
+      <div class="stat-card s2" data-icon="📅"><div class="stat-label">Events</div><div class="stat-value" id="ds-events">—</div><div class="stat-sub">This month</div></div>`;
+  } else if (role === 'teacher' || role === 'monitor') {
     document.getElementById('dash-stats').innerHTML = `
-      <div class="stat-card s1" data-icon="🎓"><div class="stat-label">My Students</div><div class="stat-value">14</div><div class="stat-sub">Bible Basics</div></div>
-      <div class="stat-card s3" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value">87%</div><div class="stat-sub">This month</div></div>
-      <div class="stat-card s4" data-icon="📊"><div class="stat-label">Avg Grade</div><div class="stat-value">82</div><div class="stat-sub">This term</div></div>
-      <div class="stat-card s2" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value">3</div><div class="stat-sub">Active this week</div></div>`;
+      <div class="stat-card s1" data-icon="🎓"><div class="stat-label">Total Students</div><div class="stat-value" id="ds-total">—</div><div class="stat-sub">Registered</div></div>
+      <div class="stat-card s3" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value" id="ds-att">—</div><div class="stat-sub">Class average</div></div>
+      <div class="stat-card s4" data-icon="📊"><div class="stat-label">Avg Grade</div><div class="stat-value" id="ds-grade">—</div><div class="stat-sub">This term</div></div>
+      <div class="stat-card s2" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value" id="ds-assign">—</div><div class="stat-sub">Active</div></div>`;
+  } else if (role === 'admin') {
+    document.getElementById('dash-stats').innerHTML = `
+      <div class="stat-card s1" data-icon="🎓"><div class="stat-label">Total Students</div><div class="stat-value" id="ds-total">—</div><div class="stat-sub">Registered</div></div>
+      <div class="stat-card s2" data-icon="✦"><div class="stat-label">Users</div><div class="stat-value" id="ds-users">—</div><div class="stat-sub">Active accounts</div></div>
+      <div class="stat-card s3" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value" id="ds-att">—</div><div class="stat-sub">Class average</div></div>
+      <div class="stat-card s4" data-icon="📊"><div class="stat-label">Avg Grade</div><div class="stat-value" id="ds-grade">—</div><div class="stat-sub">This term</div></div>`;
+  }
+}
+
+function updateDashStats(user) {
+  const role = user.role;
+  if (role === 'student') {
+    const sid = user.studentId;
+    const s = students.find(x => x.id === sid);
+    const attEl    = document.getElementById('ds-att');
+    const gradeEl  = document.getElementById('ds-grade');
+    const assignEl = document.getElementById('ds-assign');
+    const eventsEl = document.getElementById('ds-events');
+    if (attEl)    attEl.textContent   = s ? (s.att !== undefined ? s.att + '%' : '—') : '—';
+    if (gradeEl)  gradeEl.textContent = s ? (s.grade !== undefined ? s.grade : '—') : '—';
+    if (assignEl) assignEl.textContent = assignments ? assignments.length : '—';
+    if (eventsEl) eventsEl.textContent = events ? events.filter(e => {
+      const d = new Date(e.date); const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length : '—';
+  } else {
+    const totalEl = document.getElementById('ds-total');
+    const usersEl = document.getElementById('ds-users');
+    const attEl   = document.getElementById('ds-att');
+    const gradeEl = document.getElementById('ds-grade');
+    const assignEl = document.getElementById('ds-assign');
+    if (totalEl) totalEl.textContent = students.length;
+    if (usersEl) usersEl.textContent = userDB.filter(u => u.active).length;
+    const avgAtt = students.length ? Math.round(students.reduce((a,s) => a + (s.att||0), 0) / students.length) : 0;
+    const avgGrade = students.length ? Math.round(students.reduce((a,s) => a + (s.grade||0), 0) / students.length) : 0;
+    if (attEl)   attEl.textContent   = avgAtt + '%';
+    if (gradeEl) gradeEl.textContent = avgGrade;
+    if (assignEl) assignEl.textContent = assignments ? assignments.length : '—';
   }
 }
 
@@ -2160,11 +2191,17 @@ function buildStudentsTable(list) {
         <button class="btn-sm" onclick="viewStudentInfo('${s.id}')" style="background:linear-gradient(135deg,#1A3F6B,#0F2A4A);color:#fff;border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em;padding:5px 10px">👁 Info</button>
         <button class="btn-outline btn-sm" onclick="viewIDCard('${s.id}')">ID Card</button>
         ${(currentRole === 'admin' || currentRole === 'teacher') ? `<button class="btn-sm" onclick="openEditStudent('${s.id}')" style="background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--crimson-d);border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em;padding:5px 10px">✏ Edit</button>` : ''}
-        ${currentRole === 'admin' ? `<button class="btn-sm" onclick="confirmDeleteStudent('${s.id}','${s.name.replace(/'/g,"\\'")}'')" style="background:linear-gradient(135deg,var(--danger),#5A1010);color:var(--gold-ll);border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em">🗑 Delete</button>` : ''}
+        ${currentRole === 'admin' ? `<button class="btn-sm del-student-btn" data-sid="${s.id}" data-sname="${s.name.replace(/"/g,'&quot;')}" style="background:linear-gradient(135deg,var(--danger),#5A1010);color:var(--gold-ll);border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em">🗑 Delete</button>` : ''}
       </td>
     </tr>`;
   });
   document.getElementById('students-table').innerHTML = html;
+
+  // Event delegation for delete buttons (avoids slash-in-ID breaking inline onclick)
+  document.getElementById('students-table').addEventListener('click', function(e) {
+    const btn = e.target.closest('.del-student-btn');
+    if (btn) confirmDeleteStudent(btn.dataset.sid, btn.dataset.sname);
+  }, { once: true });
 }
 
 function filterByClass(cls) {
@@ -2997,21 +3034,116 @@ function doResetPassword() {
 }
 
 // ── LOAD STUDENT PROFILE for logged-in student ─────────────────
-function loadStudentProfile(sid) {
-  const s = students.find(x=>x.id===sid);
-  if (!s) return;
-  // Update the My Profile page
-  const card = document.querySelector('#page-profile .id-card');
-  if (!card) return;
-  card.querySelector('.id-name').textContent = s.name;
-  card.querySelector('.id-num').textContent = 'ID: '+s.id;
-  card.querySelector('.id-course').textContent = s.course;
-  const av = card.querySelector('.id-avatar');
-  if (s.photo) {
-    av.innerHTML = `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">`;
-    av.style.position='relative';
-  } else {
-    av.textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+async function loadStudentProfile(sid) {
+  // Wait for Firebase then find student
+  await waitForFirebase();
+
+  // If not in local array yet, wait briefly for Firebase load to populate it
+  let s = students.find(x => x.id === sid);
+  if (!s) {
+    await loadStudentsFromFirebase();
+    s = students.find(x => x.id === sid);
+  }
+  if (!s) {
+    // Student not found — show "no data" gracefully
+    const els = ['profile-name','profile-id','profile-course','idc-name','idc-id','idc-course'];
+    els.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+    return;
+  }
+
+  // ── ID Card on Students page ──
+  const idcName   = document.getElementById('idc-name');
+  const idcId     = document.getElementById('idc-id');
+  const idcCourse = document.getElementById('idc-course');
+  const idcAvatar = document.getElementById('idc-avatar');
+  if (idcName)   idcName.textContent   = s.name;
+  if (idcId)     idcId.textContent     = 'ID: ' + s.id;
+  if (idcCourse) idcCourse.textContent = s.course || '—';
+  if (idcAvatar) {
+    if (s.photo) {
+      idcAvatar.innerHTML = `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">`;
+      idcAvatar.style.position = 'relative';
+    } else {
+      idcAvatar.textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    }
+  }
+
+  // ── My Profile page ID card ──
+  const pName   = document.getElementById('profile-name');
+  const pId     = document.getElementById('profile-id');
+  const pCourse = document.getElementById('profile-course');
+  const pAvatar = document.getElementById('profile-avatar');
+  if (pName)   pName.textContent   = s.name;
+  if (pId)     pId.textContent     = 'ID: ' + s.id;
+  if (pCourse) pCourse.textContent = s.course || '—';
+  if (pAvatar) {
+    if (s.photo) {
+      pAvatar.innerHTML = `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">`;
+      pAvatar.style.position = 'relative';
+    } else {
+      pAvatar.textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    }
+  }
+
+  // ── Attendance ──
+  const attTbody = document.getElementById('profile-att-tbody');
+  if (attTbody) {
+    try {
+      const { collection, getDocs } = window._fsHelpers;
+      const snap = await getDocs(collection(window._db, 'attendance'));
+      const rows = [];
+      snap.docs.forEach(d => {
+        const rec = d.data();
+        if (!rec.records) return;
+        rec.records.filter(r => r.studentId === sid).forEach(r => {
+          const badge = r.status === 'present' ? 'badge-green' : r.status === 'permission' ? 'badge-gold' : 'badge-red';
+          rows.push(`<tr><td>${rec.date||''}</td><td>${rec.course||''}</td><td><span class="badge ${badge}">${r.status}</span></td></tr>`);
+        });
+      });
+      attTbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="3" style="text-align:center;color:var(--muted)">No attendance records yet</td></tr>';
+    } catch(e) {
+      attTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted)">Could not load attendance</td></tr>';
+    }
+  }
+
+  // ── Grades ──
+  const gradesTbody = document.getElementById('profile-grades-tbody');
+  if (gradesTbody) {
+    const g = s.grades || [];
+    if (g.length >= 3) {
+      const avg = Math.round(g[0]*0.4 + g[1]*0.4 + g[2]*0.2);
+      const badge = avg >= 90 ? 'badge-green' : avg >= 70 ? 'badge-gold' : 'badge-red';
+      gradesTbody.innerHTML = `<tr><td>${s.course||'—'}</td><td>${g[0]||0}</td><td>${g[1]||0}</td><td><span class="badge ${badge}">${avg}</span></td></tr>`;
+    } else if (typeof s.grade === 'number') {
+      const badge = s.grade >= 90 ? 'badge-green' : s.grade >= 70 ? 'badge-gold' : 'badge-red';
+      gradesTbody.innerHTML = `<tr><td>${s.course||'—'}</td><td>—</td><td>—</td><td><span class="badge ${badge}">${s.grade}</span></td></tr>`;
+    } else {
+      gradesTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">No grades recorded yet</td></tr>';
+    }
+  }
+
+  // ── Assignments ──
+  const assignDiv = document.getElementById('profile-assignments');
+  if (assignDiv) {
+    try {
+      const { collection, getDocs } = window._fsHelpers;
+      const snap = await getDocs(collection(window._db, 'assignments'));
+      const myAssigns = snap.docs.map(d=>d.data()).filter(a => !a.course || a.course === s.course || a.studentId === sid);
+      if (myAssigns.length) {
+        assignDiv.innerHTML = myAssigns.map(a => {
+          const badge = a.status === 'Submitted' ? 'badge-green' : a.status === 'Graded' ? 'badge-gold' : 'badge-red';
+          return `<div class="assign-card">
+            <div class="assign-title">${a.title||'Assignment'}</div>
+            <div class="assign-meta">Due: ${a.due||'—'} · <span class="badge ${badge}">${a.status||'Pending'}</span></div>
+            <div class="assign-desc">${a.description||''}</div>
+          </div>`;
+        }).join('');
+      } else {
+        assignDiv.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:10px 0">No assignments yet</div>';
+      }
+    } catch(e) {
+      assignDiv.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:10px 0">Could not load assignments</div>';
+    }
   }
 }
 
@@ -3331,8 +3463,8 @@ async function loadUsersFromFirebase() {
 }
 
 async function saveStudentsToFirebase() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
     for (const s of students) {
       const data = { ...s };
@@ -3347,21 +3479,18 @@ async function saveStudentsToFirebase() {
 }
 
 async function loadStudentsFromFirebase() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'students'));
     if (snap.empty) return;
     const loaded = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id.replace(/_/g, '/') }));
-    loaded.forEach(remote => {
-      const idx = students.findIndex(s => s.id === remote.id);
-      if (idx !== -1) students[idx] = remote;
-      else students.push(remote);
-    });
+    // Fully replace local array with Firebase data (source of truth)
+    students.length = 0;
+    loaded.forEach(s => students.push(s));
     buildStudentsTable(students);
     buildAttendance();
     buildGrades();
-    showToast('☁ Students loaded from Firebase ☩');
   } catch (err) {
     console.error('loadStudentsFromFirebase error:', err);
   }
@@ -3540,8 +3669,8 @@ async function saveGradesToFirebase() {
 
 // Load grades from Firebase and apply to students
 async function loadGradesFromFirebase() {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'grades'));
     if (snap.empty) return;
@@ -3592,10 +3721,13 @@ function listenChatRoom(room) {
 }
 
 async function deleteStudentFromFirebase(studentId) {
-  if (!window._db || !window._fsHelpers) return;
   try {
+    await waitForFirebase();
     const { deleteDoc, doc } = window._fsHelpers;
-    await deleteDoc(doc(window._db, 'students', studentId));
+    const safeId = studentId.replace(/\//g, '_');
+    await deleteDoc(doc(window._db, 'students', safeId));
+    await deleteDoc(doc(window._db, 'grades',   safeId));
+    await deleteDoc(doc(window._db, 'users',    safeId));
   } catch (err) {
     console.error('deleteStudentFromFirebase error:', err);
   }
