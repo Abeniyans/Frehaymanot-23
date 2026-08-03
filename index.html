@@ -13,12 +13,18 @@ document.addEventListener("DOMContentLoaded",function(){
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ፍሬ-ሃይማኖት — የሰንበት ትምህርት ቤት</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Ethiopic:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 
 <script type="module">
   import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy }
+  import { getFirestore, collection, getDocs, getDoc, setDoc, doc, deleteDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
@@ -41,7 +47,7 @@ document.addEventListener("DOMContentLoaded",function(){
   // Expose to global scope so the non-module script below can use them
   window._db        = db;
   window._storage   = storage;
-  window._fsHelpers = { collection, getDocs, setDoc, doc, deleteDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy, storageRef, uploadBytes, getDownloadURL };
+  window._fsHelpers = { collection, getDocs, getDoc, setDoc, doc, deleteDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy, storageRef, uploadBytes, getDownloadURL };
 
   console.log("✅ Firebase initialised — Firestore & Storage ready");
   window._firebaseReady = true;
@@ -84,6 +90,11 @@ body{font-family:'EB Garamond','Noto Serif Ethiopic',serif;background:var(--parc
 .home-nav a:hover,.home-nav a.active{color:var(--crimson);border-bottom-color:var(--gold);}
 .home-nav .nav-login{margin-left:auto;background:linear-gradient(135deg,var(--crimson),var(--crimson-d));color:var(--gold-ll);padding:8px 20px;border-radius:8px;border-bottom:none;box-shadow:var(--shadow-sm);}
 .home-nav .nav-login:hover{opacity:0.9;border-bottom-color:transparent;}
+#lang-toggle-btn{margin-left:12px;}
+/* Language toggle: default (no attr) shows both languages */
+body[data-lang="en"] .lang-am{display:none;}
+body[data-lang="am"] .lang-en{display:none;}
+body[data-lang="en"] .lang-sep,body[data-lang="am"] .lang-sep{display:none;}
 .home-content{padding:48px;}
 .home-section{margin-bottom:48px;}
 .home-section-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--crimson);margin-bottom:6px;}
@@ -525,6 +536,7 @@ tr:hover td{background:rgba(245,237,216,0.5);}
     <a onclick="homeSection('events')">Events / መርሃ ግብሮች</a>
     <a onclick="homeSection('courses')">Courses / ትምህርቶች</a>
     <a onclick="homeSection('contact')">Contact / ያግኙን</a>
+    <a id="lang-toggle-btn" onclick="toggleSiteLanguage()" title="Change language / ቋንቋ ይቀይሩ" style="cursor:pointer;">🌐 <span id="lang-toggle-label">EN/አማ</span></a>
     <a class="nav-login" onclick="goLogin()">☩ Sign In / ግቡ</a>
   </nav>
   <div class="home-content">
@@ -532,7 +544,7 @@ tr:hover td{background:rgba(245,237,216,0.5);}
     <div class="home-section" id="hs-features">
       <div class="home-section-title">☩ ፍሬ ሃይማኖት ሰንበት ትምህርት ቤት </div>
       <div class="home-section-amh"> ስለ ፍሬ ሃይማኖት ሰንበት ትምህርት ቤት</div>
-      <div class="home-features">
+      <div class="home-features" id="home-features-list">
         <div class="feature-card">
           <div class="feature-icon">📖</div>
           <h3>Bible Education</h3>
@@ -569,7 +581,7 @@ tr:hover td{background:rgba(245,237,216,0.5);}
     <div class="home-section" id="hs-events">
       <div class="home-section-title">☩ Upcoming Events / መርሃ ግብሮች</div>
       <div class="home-section-amh">የሚኖሩት መርሃ ግብሮች</div>
-      <div class="events-grid">
+      <div class="events-grid" id="home-events-list">
         <div class="event-card">
           <div class="event-date"><div class="eday">11</div><div class="emon">MAY</div></div>
           <div class="event-info">
@@ -608,7 +620,7 @@ tr:hover td{background:rgba(245,237,216,0.5);}
     <div class="home-section" id="hs-courses">
       <div class="home-section-title">☩ Our Courses / ትምህርቶቻችን</div>
       <div class="home-section-amh">ሰንበት ትምህርት ቤት ኮርሶች</div>
-      <div class="three-col">
+      <div class="three-col" id="home-courses-list">
         <div class="feature-card"><div class="feature-icon">✝</div><h3>መቆያ</h3><p>ለትንንሽ ሕፃናት — መዝሙር እና ጉባኤ።</p><div class="event-badge badge-maroon" style="margin-top:10px">ቅዳሜ / እሑድ</div></div>
         <div class="feature-card"><div class="feature-icon">✝</div><h3>ሕፃናት 1ሀ / 1ለ</h3><p>ለ1ኛ እና 2ተኛ / 3ተኛ እና 4ተኛ ክፍል ሕፃናት — መዝሙር እና ጉባኤ ።</p><div class="event-badge badge-maroon" style="margin-top:10px">ቅዳሜ / እሑድ</div></div>
         <div class="feature-card"><div class="feature-icon">✝</div><h3>ሕፃናት 2ሀ / 2ለ</h3><p>ለ5ኛ እና 6ተኛ / 7ተኛ እና 8ተኛ ክፍል ሕፃናት — መዝሙር እና ጉባኤ ።</p><div class="event-badge badge-gold" style="margin-top:10px">ቅዳሜ / እሑድ</div></div>
@@ -659,11 +671,11 @@ tr:hover td{background:rgba(245,237,216,0.5);}
 <!-- ══════════ APP ══════════ -->
 <div id="app">
   <div class="topbar">
-    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" style="display:none"><span></span><span></span><span></span></button>
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
     <div style="flex:1;text-align:center">
       <div class="topbar-logo" style="display:flex;align-items:center;gap:8px;"><div style="display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border-radius:50%;padding:3px;border:1.5px solid rgba(200,149,42,0.4);box-shadow:0 3px 16px rgba(0,0,0,0.28);"><img class="church-photo" style="width:24px;height:24px;object-fit:cover;border-radius:50%;display:block;"></div> ፍሬ ሃይማኖት <span class="topbar-sub">ሰንበት ትምህርት ቤት</span></div>
     </div>
-    <div style="width:36px"></div>
+    <div style="width:36px;text-align:right"><a id="app-lang-toggle-btn" onclick="toggleSiteLanguage()" title="Change language / ቋንቋ ይቀይሩ" style="cursor:pointer;font-size:18px;user-select:none;">🌐</a></div>
   </div>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -842,7 +854,10 @@ tr:hover td{background:rgba(245,237,216,0.5);}
           </select>
           <input type="date" id="att-date" style="padding:9px 14px;border:1.5px solid var(--parchment-dd);border-radius:9px;font-family:'EB Garamond',serif;font-size:14px;outline:none;background:var(--white);">
           <button class="btn-gold" onclick="saveAttendance()" id="att-save-btn">☩ Save / አስቀምጥ</button>
-          <button class="btn-outline" onclick="exportAttendanceExcel()" id="att-export-btn">📥 Attendance / አቴንዳንስ Excel</button>
+          <button class="btn-outline" onclick="exportAttendanceExcel('daily')" id="att-export-daily-btn">📅 Daily / ዕለታዊ</button>
+          <button class="btn-outline" onclick="exportAttendanceExcel('weekly')" id="att-export-weekly-btn">🗓 Weekly / ሳምንታዊ</button>
+          <button class="btn-outline" onclick="exportAttendanceExcel('monthly')" id="att-export-monthly-btn">📆 Monthly / ወርሃዊ</button>
+          <button class="btn-outline" onclick="exportAttendanceExcel('yearly')" id="att-export-yearly-btn">🗂 Yearly / ዓመታዊ</button>
           <button class="btn-outline" id="att-perm-btn" onclick="toggleAttPermPanel()" style="display:none;">🔐 Permissions / ፈቃዶች</button>
         </div>
         <div id="att-list"></div>
@@ -1017,6 +1032,7 @@ tr:hover td{background:rgba(245,237,216,0.5);}
           <option>ማዕከላዉያን 2 — ራብዓይ</option>
         </select>
         <button class="btn-gold" onclick="showPage('add-student')">☩ ተማሪ ጨምር</button>
+        <button class="btn-outline" onclick="openPdfImportModal()" title="Bulk register from PDF/Excel" style="border-color:var(--crimson);color:var(--crimson)">📄 Bulk Import / ብዙ ተማሪ አስመዝግብ</button>
         <button class="btn-outline" onclick="exportToExcel()" title="Download Excel">📥 Excel Export</button>
         <button class="btn-outline" onclick="downloadAllStudentsFullInfo()" title="Download All Full Info" style="border-color:var(--gold);color:var(--gold)">📋 All Info / ሁሉም</button>
       </div>
@@ -1142,11 +1158,11 @@ tr:hover td{background:rgba(245,237,216,0.5);}
           <div class="id-card-top"></div>
           <div style="text-align:center;padding:8px 0 0;"><div style="display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border-radius:50%;padding:3px;border:2.5px solid rgba(200,149,42,0.6);box-shadow:0 3px 16px rgba(0,0,0,0.28);"><img class="church-photo" style="width:44px;height:44px;object-fit:cover;border-radius:50%;display:block;"></div></div>
           <div class="school">ፍሬ-ሃይማኖት · የሰንበት ትምህርት ቤት</div>
-          <div class="id-avatar" id="idc-avatar"></div>
-          <div class="id-name" id="idc-name"></div>
+          <div class="id-avatar" id="idc-avatar">AB</div>
+          <div class="id-name" id="idc-name">Abebe Girma</div>
           <div class="id-role">Student / ተማሪ</div>
-          <div class="id-num" id="idc-id"></div>
-          <div class="id-course" id="idc-course"></div>
+          <div class="id-num" id="idc-id">ID: FH0001/13</div>
+          <div class="id-course" id="idc-course">Bible Basics</div>
         </div>
         <div>
           <div class="card" style="width:280px">
@@ -1225,10 +1241,137 @@ tr:hover td{background:rgba(245,237,216,0.5);}
           <div class="card-title">☩ Reports / ሪፖርቶች</div>
           <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
             <button class="btn-outline" onclick="exportToExcel()">📥 Student List Excel / የተማሪ ዝርዝር</button>
-            <button class="btn-outline" onclick="exportAttendanceExcel()">📊 5-Month Attendance Excel / የ5 ወር ክትትል (By Class)</button>
+            <button class="btn-outline" onclick="exportAttendanceExcel('monthly')">📊 Monthly Attendance Excel / ወርሃዊ ክትትል (By Class)</button>
+            <button class="btn-outline" onclick="exportAttendanceExcel('yearly')">🗂 Yearly Attendance Excel / ዓመታዊ ክትትል (By Class)</button>
             <button class="btn-outline" onclick="exportGradesExcel()">📈 Grade Report / የውጤት ሪፖርት</button>
             <button class="btn-outline" onclick="exportUsersExcel()">👤 User Accounts / የተጠቃሚ ዝርዝር</button>
           </div>
+        </div>
+      </div>
+
+      <!-- HOME PAGE CONTENT MANAGEMENT -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">🏠 Home Page Content / የመነሻ ገጽ ይዘት</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:18px;font-style:italic;">Edit what visitors see on the public home page — About, Upcoming Events, and Courses. Changes save instantly and appear live.</p>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px;">
+          <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--crimson);letter-spacing:0.03em;">☩ About / Features Section</div>
+          <button class="btn-sm" onclick="openHomeItemModal('features', null)" style="padding:7px 14px;font-size:12px;background:var(--gold);border:none;border-radius:6px;cursor:pointer;color:#fff;">+ Add Feature</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="admin-home-features-list"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
+          <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--crimson);letter-spacing:0.03em;">☩ Upcoming Events Section</div>
+          <button class="btn-sm" onclick="openHomeItemModal('events', null)" style="padding:7px 14px;font-size:12px;background:var(--gold);border:none;border-radius:6px;cursor:pointer;color:#fff;">+ Add Event</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="admin-home-events-list"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
+          <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--crimson);letter-spacing:0.03em;">☩ Courses Section</div>
+          <button class="btn-sm" onclick="openHomeItemModal('courses', null)" style="padding:7px 14px;font-size:12px;background:var(--gold);border:none;border-radius:6px;cursor:pointer;color:#fff;">+ Add Course</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="admin-home-courses-list"></div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: BULK IMPORT STUDENTS FROM PDF ══ -->
+    <div class="modal-overlay" id="pdf-import-modal">
+      <div class="modal-box" style="max-width:820px;max-height:90vh;overflow-y:auto;">
+        <button class="modal-close" onclick="closePdfImportModal()">✕</button>
+        <div class="modal-title">📄 Bulk Import Students / ብዙ ተማሪዎችን አስመዝግብ</div>
+        <p style="font-size:13px;color:var(--muted);margin:-6px 0 16px;">
+          Upload a PDF, Excel (.xlsx), or CSV list of students. We'll try to detect names and classes
+          automatically — check and fix the table below before registering. / PDF ወይም Excel ፋይል ይስቀሉ፣ ስሞችና ክፍሎች በራስ-ሰር ይታወቃሉ፤ ከማስመዝገብዎ በፊት ያረጋግጡ።
+        </p>
+
+        <div id="pdf-import-step1">
+          <div class="field-group" style="margin-bottom:14px">
+            <label>File — PDF, Excel or CSV <span class="amh-lbl">ፋይል</span></label>
+            <input type="file" id="pdf-import-file" accept="application/pdf,.pdf,.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv">
+          </div>
+          <div class="field-group" style="margin-bottom:14px">
+            <label>Default Class (used when a row's class can't be detected) <span class="amh-lbl">ነባሪ ክፍል</span></label>
+            <select id="pdf-import-default-class"></select>
+          </div>
+          <div class="field-group" style="margin-bottom:14px">
+            <label>Member Since (applies to this whole batch) <span class="amh-lbl">አባል ከሆነበት ቀን</span></label>
+            <input type="date" id="pdf-import-member-since">
+          </div>
+          <button class="btn-gold" onclick="extractImportFile()" id="pdf-extract-btn">☩ Extract Names / ስሞችን አውጣ</button>
+        </div>
+
+        <div id="pdf-import-step2" style="display:none;margin-top:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--crimson);">
+              Review before registering / ከማስመዝገብ በፊት ያረጋግጡ (<span id="pdf-row-count">0</span> found)
+            </div>
+            <button class="btn-sm" onclick="addPdfImportRow()" style="padding:7px 14px;font-size:12px;background:var(--gold);border:none;border-radius:6px;cursor:pointer;color:#fff;">+ Add Row</button>
+          </div>
+          <div class="table-wrap" style="max-height:340px;overflow-y:auto;">
+            <table>
+              <thead><tr><th style="width:40%">Full Name / ሙሉ ስም</th><th>Class / ክፍል</th><th>Details</th><th></th></tr></thead>
+              <tbody id="pdf-import-rows"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-gold" onclick="registerPdfImportStudents()">☩ Register All & Download Excel / ሁሉንም አስመዝግብ</button>
+            <button class="btn-outline" onclick="closePdfImportModal()">Cancel / ይቅር</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: EDIT ONE IMPORTED STUDENT'S FULL DETAILS ══ -->
+    <div class="modal-overlay" id="pdf-import-detail-modal">
+      <div class="modal-box" style="max-width:620px;max-height:88vh;overflow-y:auto;">
+        <button class="modal-close" onclick="closePdfImportDetailModal()">✕</button>
+        <div class="modal-title">👤 Student Details / የተማሪ ዝርዝር — <span id="pdf-detail-name"></span></div>
+        <p style="font-size:12px;color:var(--muted);margin:-6px 0 14px;">
+          Optional — fills in the same fields as the regular Add Student form. Leave blank if unknown. / አማራጭ
+        </p>
+        <div id="pdf-detail-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;"></div>
+        <button class="btn-gold" style="margin-top:18px;" onclick="savePdfImportDetail()">Save Details / አስቀምጥ</button>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: ADD / EDIT HOME PAGE ITEM ══ -->
+    <div class="modal-overlay" id="home-item-modal">
+      <div class="modal-box">
+        <button class="modal-close" onclick="closeHomeItemModal()">✕</button>
+        <div class="modal-title" id="home-modal-title">☩ Add Item</div>
+
+        <div id="hm-field-icon" class="field-group" style="margin-bottom:14px">
+          <label>Icon / Emoji</label>
+          <input type="text" id="hm-icon" placeholder="e.g. 📖 or ✝" maxlength="4">
+        </div>
+        <div id="hm-field-daymonth" style="display:none;gap:10px;margin-bottom:14px">
+          <div class="field-group" style="flex:1"><label>Day</label><input type="text" id="hm-day" placeholder="e.g. 11" maxlength="2"></div>
+          <div class="field-group" style="flex:1"><label>Month</label><input type="text" id="hm-month" placeholder="e.g. MAY" maxlength="3"></div>
+        </div>
+        <div class="field-group" style="margin-bottom:14px">
+          <label>Title / ርዕስ</label>
+          <input type="text" id="hm-title" placeholder="Title">
+        </div>
+        <div class="field-group" style="margin-bottom:14px">
+          <label>Description / መግለጫ</label>
+          <textarea id="hm-desc" rows="3" placeholder="Short description" style="width:100%;padding:9px 12px;border:1.5px solid var(--parchment-dd);border-radius:9px;font-family:'EB Garamond',serif;font-size:14px;outline:none;resize:vertical;"></textarea>
+        </div>
+        <div id="hm-field-badge" class="field-group" style="margin-bottom:14px;display:none">
+          <label>Badge Text <span class="amh-lbl">e.g. schedule / time</span></label>
+          <input type="text" id="hm-badge" placeholder="e.g. Sunday 9:00 AM">
+        </div>
+        <div id="hm-field-color" class="field-group" style="margin-bottom:18px;display:none">
+          <label>Badge Color</label>
+          <select id="hm-color">
+            <option value="maroon">Maroon</option>
+            <option value="gold">Gold</option>
+            <option value="blue">Blue</option>
+            <option value="green">Green</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-gold" onclick="saveHomeItem()">☩ Save / አስቀምጥ</button>
+          <button class="btn-outline" onclick="closeHomeItemModal()">Cancel / ይቅር</button>
         </div>
       </div>
     </div>
@@ -1380,6 +1523,9 @@ tr:hover td{background:rgba(245,237,216,0.5);}
         </div>
       </div>
     </div>
+
+    <!-- ══ MY PROFILE (student only) ══ -->
+    <div class="page" id="page-profile">
       <div class="page-header">
         <h1>My Profile / የኔ መዝገብ</h1>
         <div class="amh-title">የግል መረጃ እና ውጤቶች</div>
@@ -1391,17 +1537,23 @@ tr:hover td{background:rgba(245,237,216,0.5);}
             <div class="id-card-top"></div>
             <div style="text-align:center;padding:8px 0 0;"><div style="display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border-radius:50%;padding:3px;border:2.5px solid rgba(200,149,42,0.6);box-shadow:0 3px 16px rgba(0,0,0,0.28);"><img class="church-photo" style="width:36px;height:36px;object-fit:cover;border-radius:50%;display:block;"></div></div>
             <div class="school">ፍሬ-ሃይማኖት · የሰንበት ትምህርት ቤት</div>
-            <div class="id-avatar" id="profile-avatar"></div>
-            <div class="id-name" id="profile-name"></div>
+            <div class="id-avatar">AB</div>
+            <div class="id-name">Abebe Girma</div>
             <div class="id-role">Student / ተማሪ</div>
-            <div class="id-num" id="profile-id"></div>
-            <div class="id-course" id="profile-course"></div>
+            <div class="id-num">ID: FH0001/13</div>
+            <div class="id-course">Bible Basics</div>
           </div>
           <div class="card">
             <div class="card-title">☩ Attendance / አቴንዳንስ </div>
             <div class="table-wrap"><table>
               <thead><tr><th>Date</th><th>Course</th><th>Status</th></tr></thead>
-              <tbody id="profile-att-tbody"><tr><td colspan="3" style="text-align:center;color:var(--muted)">Loading…</td></tr></tbody>
+              <tbody>
+                <tr><td>May 4, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
+                <tr><td>Apr 27, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
+                <tr><td>Apr 20, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
+                <tr><td>Apr 13, 2025</td><td>Bible Basics</td><td><span class="badge badge-red">Absent</span></td></tr>
+                <tr><td>Apr 6, 2025</td><td>Bible Basics</td><td><span class="badge badge-green">Present</span></td></tr>
+              </tbody>
             </table></div>
           </div>
         </div>
@@ -1410,13 +1562,22 @@ tr:hover td{background:rgba(245,237,216,0.5);}
             <div class="card-title">☩ My Grades / የኔ ውጤቶች</div>
             <div class="table-wrap"><table>
               <thead><tr><th>Course</th><th>Midterm</th><th>Final</th><th>Avg</th></tr></thead>
-              <tbody id="profile-grades-tbody"><tr><td colspan="4" style="text-align:center;color:var(--muted)">Loading…</td></tr></tbody>
+              <tbody>
+                <tr><td>Bible Basics</td><td>78</td><td>85</td><td><span class="badge badge-gold">81.5</span></td></tr>
+              </tbody>
             </table></div>
           </div>
           <div class="card">
             <div class="card-title">☩ My Assignments / የቤት ስራ</div>
-            <div id="profile-assignments">
-              <div style="color:var(--muted);font-style:italic;padding:10px 0">Loading…</div>
+            <div class="assign-card">
+              <div class="assign-title">Book of Genesis — Summary</div>
+              <div class="assign-meta">Due: May 18, 2025 · <span class="badge badge-gold">Pending</span></div>
+              <div class="assign-desc">Write a 1-page summary of Genesis chapters 1–10.</div>
+            </div>
+            <div class="assign-card">
+              <div class="assign-title">Psalm 23 — Memorization</div>
+              <div class="assign-meta">Due: May 25, 2025 · <span class="badge badge-green">Submitted</span></div>
+              <div class="assign-desc">Memorize and recite Psalm 23 in full.</div>
             </div>
           </div>
           <!-- ══ CHANGE PASSWORD CARD (students only) ══ -->
@@ -1553,8 +1714,18 @@ function generateStudentId(memberSince, allStudents) {
   return 'FH' + seq + '/' + yr;
 }
 
-const students = [];
-// Students are loaded from Firebase on login — no hardcoded data
+const students = [
+  { id:'FH0001/13', memberSince:'2013-01-01', name:'አበበ ግርማ',    christian:'ጊዮርጊስ',   course:'ማዕከላዉያን 1 — ቀዳማይ',         age:14, gender:'ወንድ', phone:'+251911234567', att:92, grade:81 },
+  { id:'FH0001/15', memberSince:'2015-03-08', name:'ትግስት ኃይሌ',   christian:'ማርያም',    course:'ማዕከላዉያን 2 — ካልዓይ',          age:16, gender:'ሴት',  phone:'+251922345678', att:88, grade:90 },
+  { id:'FH0001/18', memberSince:'2018-09-15', name:'ሳሙኤል ተስፋዬ', christian:'ሚካኤል',    course:'ሕፃናት 1ሀ',                    age:8,  gender:'ወንድ', phone:'+251933456789', att:75, grade:72 },
+  { id:'FH0002/15', memberSince:'2015-06-20', name:'ሜሮን በቀለ',    christian:'ሣራ',       course:'ማዕከላዉያን 2 — ሣልሳይ',          age:17, gender:'ሴት',  phone:'+251944567890', att:95, grade:88 },
+  { id:'FH0001/19', memberSince:'2019-02-10', name:'ዳዊት አለሙ',    christian:'ዘካርያስ',   course:'ሕፃናት 2ሀ',                    age:10, gender:'ወንድ', phone:'+251955678901', att:60, grade:65 },
+  { id:'FH0002/18', memberSince:'2018-11-03', name:'ሃና ታደሰ',     christian:'ሩት',       course:'ማዕከላዉያን 1 — ቀዳማይ መግቢያ',   age:13, gender:'ሴት',  phone:'+251966789012', att:84, grade:79 },
+  { id:'FH0001/20', memberSince:'2020-01-19', name:'ዮሐንስ ከበደ',  christian:'ጴጥሮስ',   course:'መቆያ',                          age:5,  gender:'ወንድ', phone:'+251977890123', att:90, grade:0  },
+  { id:'FH0003/18', memberSince:'2018-04-07', name:'ሰሎሜ ደሳለኝ',  christian:'ሔዋን',     course:'ሕፃናት 1ለ',                    age:7,  gender:'ሴት',  phone:'+251988901234', att:78, grade:68 },
+  { id:'FH0002/13', memberSince:'2013-07-25', name:'ቴዎድሮስ አሰፋ', christian:'ቴዎድሮስ',  course:'ማዕከላዉያን 2 — ራብዓይ',          age:18, gender:'ወንድ', phone:'+251999012345', att:85, grade:77 },
+  { id:'FH0001/21', memberSince:'2021-05-30', name:'ፍሬወይኒ ኃ/ሚ', christian:'ሃና',       course:'ሕፃናት 2ለ',                    age:9,  gender:'ሴት',  phone:'+251900123456', att:93, grade:82 },
+];
 
 // ── ROLE-BASED NAVIGATION ─────────────────────────────────────
 const navMenus = {
@@ -1643,6 +1814,310 @@ function goHome() {
 }
 window.goHome = goHome;
 
+// ── LANGUAGE TOGGLE (translator icon) ──────────────────────────
+// Wraps "English / አማርኛ" style bilingual text into
+// <span class="lang-en">/<span class="lang-am"> pairs so the toggle
+// can show English-only, Amharic-only, or both.
+function bilingualizeElement(el) {
+  if (!el || el.dataset.bilingualized) return;
+  // Only wrap direct text — skip elements that already contain child elements we shouldn't disturb
+  if (el.children.length > 0) return;
+  const text = el.textContent;
+  const parts = text.split(' / ');
+  if (parts.length !== 2) return; // only handle clean "X / Y" pairs
+  el.innerHTML = `<span class="lang-en">${parts[0]}</span><span class="lang-sep"> / </span><span class="lang-am">${parts[1]}</span>`;
+  el.dataset.bilingualized = '1';
+}
+
+// Scans the CURRENT dom for any not-yet-wrapped bilingual text. Safe to
+// call as often as needed — bilingualizeElement() skips anything it has
+// already wrapped. This must be re-run whenever new content is rendered
+// (page navigation, table rebuilds, admin lists, etc.) — otherwise only
+// whatever existed at first page-load gets translated, and everything
+// rendered afterwards is left showing both languages, which looks like
+// only *some* of the app changes when you toggle.
+function bilingualizeAll() {
+  const selectors = [
+    '.home-nav a', '.btn-cta',
+    '.nav-label-text', '.nav-label',
+    '.page-header h1', '.page-header p',
+    '.card-title', '.perm-role', '.perm-desc',
+    'button', 'label', '.badge',
+    '.stat-label', '.stat-sub',
+    'td', 'th', 'option',
+    '.assign-title', '.assign-meta', '.assign-desc',
+  ];
+  selectors.forEach(sel => document.querySelectorAll(sel).forEach(bilingualizeElement));
+}
+
+function initLangToggle() {
+  bilingualizeAll();
+  const saved = localStorage.getItem('fh_lang') || 'both';
+  applySiteLanguage(saved);
+}
+
+function applySiteLanguage(mode) {
+  document.body.setAttribute('data-lang', mode === 'both' ? '' : mode);
+  const label = document.getElementById('lang-toggle-label');
+  if (label) label.textContent = mode === 'en' ? 'English' : mode === 'am' ? 'አማርኛ' : 'EN/አማ';
+  localStorage.setItem('fh_lang', mode);
+}
+
+function toggleSiteLanguage() {
+  bilingualizeAll(); // catch anything rendered since the last toggle
+  const current = localStorage.getItem('fh_lang') || 'both';
+  const next = current === 'both' ? 'en' : current === 'en' ? 'am' : 'both';
+  applySiteLanguage(next);
+}
+window.toggleSiteLanguage = toggleSiteLanguage;
+
+document.addEventListener('DOMContentLoaded', function() {
+  initLangToggle();
+  loadHomeContent();
+});
+
+
+// ── HOME PAGE CONTENT (admin-editable About/Events/Courses) ────
+const DEFAULT_HOME_FEATURES = [
+  { id:'f1', icon:'📖', title:'Bible Education', desc:'Comprehensive biblical teaching for all ages, from beginners to advanced students in the faith.' },
+  { id:'f2', icon:'✦', title:'Attendance / አቴንዳንስ Tracking', desc:'Digital attendance records for every class, keeping parents and teachers informed.' },
+  { id:'f3', icon:'📊', title:'Academic Progress', desc:'Grade tracking and assignment management to help every student grow in knowledge.' },
+  { id:'f4', icon:'🎓', title:'Student IDs', desc:'Official student identification cards for all enrolled members of ፍሬ-ሃይማኖት.' },
+  { id:'f5', icon:'📅', title:'Events & Programs', desc:'Stay updated on all upcoming church events, special programs, and celebrations.' },
+  { id:'f6', icon:'💬', title:'Communication', desc:'Students can leave comments, teachers can give feedback, all in one place.' },
+];
+
+const DEFAULT_HOME_EVENTS = [
+  { id:'e1', day:'11', month:'MAY', title:'Sunday School Opening Ceremony', desc:'New term begins for all classes. All students must attend.', badge:'Sunday 9:00 AM', color:'maroon' },
+  { id:'e2', day:'18', month:'MAY', title:'Bible Quiz Competition / የቅዱስ መጽሐፍ ፈተና', desc:'Annual Bible quiz for all grade levels. Prizes for top 3.', badge:'Saturday 2:00 PM', color:'gold' },
+  { id:'e3', day:'25', month:'MAY', title:'Pentecost Celebration', desc:'Special service and student presentations for Pentecost.', badge:'Sunday 8:00 AM', color:'maroon' },
+  { id:'e4', day:'01', month:'JUN', title:'Midterm Examinations / የወሰን ፈተና', desc:'Midterm exams for all courses. Study materials distributed.', badge:'All Day', color:'blue' },
+];
+
+const DEFAULT_HOME_COURSES = [
+  { id:'c1', icon:'✝', title:'መቆያ', desc:'ለትንንሽ ሕፃናት — መዝሙር እና ጉባኤ።', badge:'ቅዳሜ / እሑድ', color:'maroon' },
+  { id:'c2', icon:'✝', title:'ሕፃናት 1ሀ / 1ለ', desc:'ለ1ኛ እና 2ተኛ / 3ተኛ እና 4ተኛ ክፍል ሕፃናት — መዝሙር እና ጉባኤ ።', badge:'ቅዳሜ / እሑድ', color:'maroon' },
+  { id:'c3', icon:'✝', title:'ሕፃናት 2ሀ / 2ለ', desc:'ለ5ኛ እና 6ተኛ / 7ተኛ እና 8ተኛ ክፍል ሕፃናት — መዝሙር እና ጉባኤ ።', badge:'ቅዳሜ / እሑድ', color:'gold' },
+  { id:'c4', icon:'✝', title:'ማዕከላዉያን 1', desc:'ቀዳማይ መግቢያ እና ቀዳማይ — መዝሙር እና ኮርስ።', badge:'ቅዳሜ / እሑድ', color:'maroon' },
+  { id:'c5', icon:'✝', title:'ማዕከላዉያን 2', desc:'ካልዓይ፣ ሣልሳይ፣ ራብዓይ — መዝሙር እና ኮርስ።', badge:'ቅዳሜ / እሑድ', color:'maroon' },
+];
+
+let homeFeatures = JSON.parse(JSON.stringify(DEFAULT_HOME_FEATURES));
+let homeEvents   = JSON.parse(JSON.stringify(DEFAULT_HOME_EVENTS));
+let homeCourses  = JSON.parse(JSON.stringify(DEFAULT_HOME_COURSES));
+
+function _escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderHomeFeatures() {
+  const el = document.getElementById('home-features-list');
+  if (!el) return;
+  el.innerHTML = homeFeatures.map(f => `
+    <div class="feature-card">
+      <div class="feature-icon">${_escHtml(f.icon)}</div>
+      <h3>${_escHtml(f.title)}</h3>
+      <p>${_escHtml(f.desc)}</p>
+    </div>`).join('');
+}
+
+function renderHomeEvents() {
+  const el = document.getElementById('home-events-list');
+  if (!el) return;
+  el.innerHTML = homeEvents.map(ev => `
+    <div class="event-card">
+      <div class="event-date"><div class="eday">${_escHtml(ev.day)}</div><div class="emon">${_escHtml(ev.month)}</div></div>
+      <div class="event-info">
+        <h4>${_escHtml(ev.title)}</h4>
+        <p>${_escHtml(ev.desc)}</p>
+        <span class="event-badge badge-${_escHtml(ev.color||'maroon')}">${_escHtml(ev.badge)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderHomeCourses() {
+  const el = document.getElementById('home-courses-list');
+  if (!el) return;
+  el.innerHTML = homeCourses.map(c => `
+    <div class="feature-card">
+      <div class="feature-icon">${_escHtml(c.icon)}</div>
+      <h3>${_escHtml(c.title)}</h3>
+      <p>${_escHtml(c.desc)}</p>
+      <div class="event-badge badge-${_escHtml(c.color||'maroon')}" style="margin-top:10px">${_escHtml(c.badge)}</div>
+    </div>`).join('');
+}
+
+async function loadHomeContent() {
+  // Render defaults immediately so the page never looks empty while Firebase loads
+  renderHomeFeatures(); renderHomeEvents(); renderHomeCourses();
+  try {
+    await waitForFirebase();
+    const { doc, getDoc, setDoc } = window._fsHelpers;
+    async function loadSection(key, defaults) {
+      const ref = doc(window._db, 'homeContent', key);
+      const snap = await getDoc(ref);
+      if (snap.exists() && Array.isArray(snap.data().items) && snap.data().items.length) {
+        return snap.data().items;
+      }
+      await setDoc(ref, { items: defaults, updatedAt: new Date().toISOString() });
+      return defaults;
+    }
+    homeFeatures = await loadSection('features', homeFeatures);
+    homeEvents   = await loadSection('events',   homeEvents);
+    homeCourses  = await loadSection('courses',  homeCourses);
+  } catch (err) {
+    console.error('loadHomeContent error:', err);
+  }
+  renderHomeFeatures(); renderHomeEvents(); renderHomeCourses();
+  renderAdminHomeLists();
+}
+
+async function saveHomeSection(section) {
+  const key = section === 'features' ? 'features' : section === 'events' ? 'events' : 'courses';
+  const items = section === 'features' ? homeFeatures : section === 'events' ? homeEvents : homeCourses;
+  try {
+    await waitForFirebase();
+    const { doc, setDoc } = window._fsHelpers;
+    await setDoc(doc(window._db, 'homeContent', key), { items, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error('saveHomeSection error:', err);
+    showToast('⚠ Could not save: ' + err.message);
+    return false;
+  }
+  return true;
+}
+
+function _homeGenId(prefix) { return prefix + Date.now().toString(36); }
+
+// ── Admin Panel: render the manage-lists (About/Events/Courses) ──
+function renderAdminHomeLists() {
+  const fEl = document.getElementById('admin-home-features-list');
+  if (fEl) {
+    fEl.innerHTML = homeFeatures.map(f => `
+      <div class="perm-row">
+        <div class="perm-info">
+          <div class="perm-role">${_escHtml(f.icon)} ${_escHtml(f.title)}</div>
+          <div class="perm-desc">${_escHtml(f.desc)}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm" onclick="openHomeItemModal('features','${f.id}')" style="padding:6px 12px;font-size:12px;">✎ Edit</button>
+          <button class="btn-sm" onclick="deleteHomeItem('features','${f.id}')" style="padding:6px 12px;font-size:12px;background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;">🗑</button>
+        </div>
+      </div>`).join('') || '<p style="font-size:13px;color:var(--muted);">No items yet.</p>';
+  }
+  const eEl = document.getElementById('admin-home-events-list');
+  if (eEl) {
+    eEl.innerHTML = homeEvents.map(ev => `
+      <div class="perm-row">
+        <div class="perm-info">
+          <div class="perm-role">${_escHtml(ev.day)} ${_escHtml(ev.month)} — ${_escHtml(ev.title)}</div>
+          <div class="perm-desc">${_escHtml(ev.desc)} · ${_escHtml(ev.badge)}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm" onclick="openHomeItemModal('events','${ev.id}')" style="padding:6px 12px;font-size:12px;">✎ Edit</button>
+          <button class="btn-sm" onclick="deleteHomeItem('events','${ev.id}')" style="padding:6px 12px;font-size:12px;background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;">🗑</button>
+        </div>
+      </div>`).join('') || '<p style="font-size:13px;color:var(--muted);">No items yet.</p>';
+  }
+  const cEl = document.getElementById('admin-home-courses-list');
+  if (cEl) {
+    cEl.innerHTML = homeCourses.map(c => `
+      <div class="perm-row">
+        <div class="perm-info">
+          <div class="perm-role">${_escHtml(c.icon)} ${_escHtml(c.title)}</div>
+          <div class="perm-desc">${_escHtml(c.desc)} · ${_escHtml(c.badge)}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm" onclick="openHomeItemModal('courses','${c.id}')" style="padding:6px 12px;font-size:12px;">✎ Edit</button>
+          <button class="btn-sm" onclick="deleteHomeItem('courses','${c.id}')" style="padding:6px 12px;font-size:12px;background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;">🗑</button>
+        </div>
+      </div>`).join('') || '<p style="font-size:13px;color:var(--muted);">No items yet.</p>';
+  }
+}
+
+let _homeModalSection = null;
+let _homeModalEditId  = null;
+
+function openHomeItemModal(section, id) {
+  _homeModalSection = section;
+  _homeModalEditId  = id || null;
+  const list = section === 'features' ? homeFeatures : section === 'events' ? homeEvents : homeCourses;
+  const item = id ? list.find(x => x.id === id) : null;
+
+  document.getElementById('home-modal-title').textContent = (item ? '✎ Edit ' : '☩ Add ') +
+    (section === 'features' ? 'About Feature' : section === 'events' ? 'Upcoming Event' : 'Course');
+
+  // Toggle which field groups show, depending on section type
+  document.getElementById('hm-field-daymonth').style.display = section === 'events' ? 'flex' : 'none';
+  document.getElementById('hm-field-icon').style.display     = section === 'events' ? 'none' : 'block';
+  document.getElementById('hm-field-badge').style.display    = (section === 'events' || section === 'courses') ? 'block' : 'none';
+  document.getElementById('hm-field-color').style.display    = (section === 'events' || section === 'courses') ? 'block' : 'none';
+
+  document.getElementById('hm-icon').value  = item ? (item.icon || '') : (section === 'courses' ? '✝' : '📖');
+  document.getElementById('hm-day').value   = item ? (item.day || '') : '';
+  document.getElementById('hm-month').value = item ? (item.month || '') : '';
+  document.getElementById('hm-title').value = item ? (item.title || '') : '';
+  document.getElementById('hm-desc').value  = item ? (item.desc || '') : '';
+  document.getElementById('hm-badge').value = item ? (item.badge || '') : '';
+  document.getElementById('hm-color').value = item ? (item.color || 'maroon') : 'maroon';
+
+  openModal('home-item-modal');
+}
+window.openHomeItemModal = openHomeItemModal;
+
+function closeHomeItemModal() {
+  closeModal('home-item-modal');
+}
+window.closeHomeItemModal = closeHomeItemModal;
+
+async function saveHomeItem() {
+  const section = _homeModalSection;
+  const title = document.getElementById('hm-title').value.trim();
+  const desc  = document.getElementById('hm-desc').value.trim();
+  if (!title) { showToast('Title is required / ርዕስ ያስፈልጋል'); return; }
+
+  const list = section === 'features' ? homeFeatures : section === 'events' ? homeEvents : homeCourses;
+  const data = {
+    title, desc,
+    icon:  document.getElementById('hm-icon').value.trim(),
+    day:   document.getElementById('hm-day').value.trim(),
+    month: document.getElementById('hm-month').value.trim().toUpperCase(),
+    badge: document.getElementById('hm-badge').value.trim(),
+    color: document.getElementById('hm-color').value,
+  };
+
+  if (_homeModalEditId) {
+    const idx = list.findIndex(x => x.id === _homeModalEditId);
+    if (idx > -1) list[idx] = { ...list[idx], ...data };
+  } else {
+    list.push({ id: _homeGenId(section[0]), ...data });
+  }
+
+  const ok = await saveHomeSection(section);
+  if (ok) {
+    showToast('☩ Saved / ተቀምጧል');
+    closeHomeItemModal();
+    renderHomeFeatures(); renderHomeEvents(); renderHomeCourses();
+    renderAdminHomeLists();
+  }
+}
+window.saveHomeItem = saveHomeItem;
+
+async function deleteHomeItem(section, id) {
+  if (!confirm('Delete this item? / ይህን ንጥል ይሰርዙ?')) return;
+  const list = section === 'features' ? homeFeatures : section === 'events' ? homeEvents : homeCourses;
+  const idx = list.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  list.splice(idx, 1);
+  const ok = await saveHomeSection(section);
+  if (ok) {
+    showToast('🗑 Deleted / ተሰርዟል');
+    renderHomeFeatures(); renderHomeEvents(); renderHomeCourses();
+    renderAdminHomeLists();
+  }
+}
+window.deleteHomeItem = deleteHomeItem;
+
 // ── AUTH SYSTEM ───────────────────────────────────────────────
 // Passwords stored as hashed strings (SHA-256 simulation via simple hash)
 // In production use bcrypt on a real backend. This is a demo.
@@ -1658,14 +2133,24 @@ function simpleHash(str) {
 // User database — created/managed by admin
 // Passwords are stored hashed. Plain shown only in hint for demo.
 let userDB = [
-  { username:'admin',    pwHash: simpleHash('Admin@2024!'),  role:'admin',   name:'Admin User', active:true },
-  { username:'teacher1', pwHash: simpleHash('Teach@123'),    role:'teacher', name:'ድ/ር ማርታ',   active:true, studentId:null },
-  { username:'teacher2', pwHash: simpleHash('Teach@456'),    role:'teacher', name:'ዲ/ን ዳንኤል',  active:true, studentId:null },
-  { username:'monitor1', pwHash: simpleHash('Monitor@123'),  role:'monitor', name:'ወ/ሮ ሳሙኤል',  active:true, studentId:null },
-  // Student accounts are loaded from Firebase — not hardcoded here
+  { username:'admin',    pwHash: simpleHash('Admin@2024!'),       role:'admin',   name:'Admin User',   active:true },
+  { username:'teacher1', pwHash: simpleHash('Teach@123'),          role:'teacher', name:'ድ/ር ማርታ',     active:true, studentId:null },
+  { username:'teacher2', pwHash: simpleHash('Teach@456'),          role:'teacher', name:'ዲ/ን ዳንኤል',    active:true, studentId:null },
+  { username:'monitor1', pwHash: simpleHash('Monitor@123'),        role:'monitor', name:'ወ/ሮ ሳሙኤል',    active:true, studentId:null },
+  // Students: username = Student ID,  password = Senbet@2024 (default for all)
+  { username:'FH0001/13', pwHash: simpleHash('Senbet@2024'), role:'student', name:'አበበ ግርማ',       active:true, studentId:'FH0001/13' },
+  { username:'FH0001/15', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ትግስት ኃይሌ',      active:true, studentId:'FH0001/15' },
+  { username:'FH0001/18', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሳሙኤል ተስፋዬ',    active:true, studentId:'FH0001/18' },
+  { username:'FH0002/15', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሜሮን በቀለ',       active:true, studentId:'FH0002/15' },
+  { username:'FH0001/19', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ዳዊት አለሙ',       active:true, studentId:'FH0001/19' },
+  { username:'FH0002/18', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሃና ታደሰ',        active:true, studentId:'FH0002/18' },
+  { username:'FH0001/20', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ዮሐንስ ከበደ',     active:true, studentId:'FH0001/20' },
+  { username:'FH0003/18', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ሰሎሜ ደሳለኝ',     active:true, studentId:'FH0003/18' },
+  { username:'FH0002/13', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ቴዎድሮስ አሰፋ',    active:true, studentId:'FH0002/13' },
+  { username:'FH0001/21', pwHash: simpleHash('Senbet@2024'), role:'student', name:'ፍሬወይኒ ኃ/ሚ',   active:true, studentId:'FH0001/21' },
 ];
 
-// Wait for Firebase module to finish loading before using it
+// Wait for Firebase module to finish loading (ES modules are async)
 function waitForFirebase() {
   if (window._firebaseReady) return Promise.resolve();
   return new Promise(resolve => window.addEventListener('firebase-ready', resolve, { once: true }));
@@ -1708,8 +2193,8 @@ async function doLogin() {
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = '⏳ Checking…'; }
 
-  // Wait for Firebase to be ready, then load latest passwords
-  try { await waitForFirebase(); await loadUsersFromFirebase(); } catch(e) { /* Fall back to local userDB */ }
+  // Try to load latest passwords from Firebase (non-blocking — fall back to local if Firebase not ready)
+  try { await loadUsersFromFirebase(); } catch(e) { /* Firebase not ready yet — use local userDB */ }
 
   // Re-enable button
   if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '☩ Enter / ግቡ'; }
@@ -1775,30 +2260,17 @@ async function doLogin() {
   buildUserManagementTable();
   document.getElementById('att-date').valueAsDate = new Date();
 
-  if (user.role === 'student' && user.studentId) {
-    // Load Firebase first so profile has real data
-    waitForFirebase().then(() => loadStudentsFromFirebase()).then(() => {
-      loadStudentProfile(user.studentId);
-      buildStudentsTable(students);
-      buildAttendance();
-      buildGrades();
-      loadGradesFromFirebase();
-      loadEventsFromFirebase();
-      loadAssignmentsFromFirebase();
-      updateDashStats(user);
-    });
-  } else {
-    // Load Firebase data in background after login succeeds
-    waitForFirebase().then(() => loadStudentsFromFirebase()).then(() => {
-      buildStudentsTable(students);
-      buildAttendance();
-      buildGrades();
-      loadGradesFromFirebase();
-      loadEventsFromFirebase();
-      loadAssignmentsFromFirebase();
-      updateDashStats(user);
-    });
-  }
+  if (user.role === 'student' && user.studentId) loadStudentProfile(user.studentId);
+
+  // Load Firebase data in background after login succeeds
+  loadStudentsFromFirebase().then(() => {
+    buildStudentsTable(students);
+    buildAttendance();
+    buildGrades();
+    loadGradesFromFirebase();
+    loadEventsFromFirebase();
+    loadAssignmentsFromFirebase();
+  });
   listenChatRoom('general');
 
   showPage('dashboard');
@@ -1843,35 +2315,18 @@ document.addEventListener('DOMContentLoaded', function() {
     buildUserManagementTable();
     document.getElementById('att-date').valueAsDate = new Date();
 
-    if (user.role === 'student' && user.studentId) {
-      waitForFirebase().then(() => {
-        loadUsersFromFirebase();
-        return loadStudentsFromFirebase();
-      }).then(() => {
-        loadStudentProfile(user.studentId);
-        buildStudentsTable(students);
-        buildAttendance();
-        buildGrades();
-        loadGradesFromFirebase();
-        loadEventsFromFirebase();
-        loadAssignmentsFromFirebase();
-        updateDashStats(user);
-      });
-    } else {
-      // ── LOAD FROM FIREBASE on restore ──
-      waitForFirebase().then(() => {
-        loadUsersFromFirebase();
-        return loadStudentsFromFirebase();
-      }).then(() => {
-        buildStudentsTable(students);
-        buildAttendance();
-        buildGrades();
-        loadGradesFromFirebase();
-        loadEventsFromFirebase();
-        loadAssignmentsFromFirebase();
-        updateDashStats(user);
-      });
-    }
+    if (user.role === 'student' && user.studentId) loadStudentProfile(user.studentId);
+
+    // ── LOAD FROM FIREBASE on restore ──
+    loadUsersFromFirebase();
+    loadStudentsFromFirebase().then(() => {
+      buildStudentsTable(students);
+      buildAttendance();
+      buildGrades();
+      loadGradesFromFirebase();
+      loadEventsFromFirebase();
+      loadAssignmentsFromFirebase();
+    });
     listenChatRoom('general');
 
     showPage('dashboard');
@@ -1926,57 +2381,19 @@ function applyRoleUI(role, rc) {
   // Grades — disable inputs for students
   document.querySelectorAll('.grade-input').forEach(inp => { inp.disabled = !rc.canEditGrades; });
 
-  // Dashboard stats — show skeleton, real values filled by updateDashStats after Firebase loads
+  // Dashboard stats — show different stats per role
   if (role === 'student') {
     document.getElementById('dash-stats').innerHTML = `
-      <div class="stat-card s1" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value" id="ds-att">—</div><div class="stat-sub">This term</div></div>
-      <div class="stat-card s3" data-icon="📊"><div class="stat-label">My Grade</div><div class="stat-value" id="ds-grade">—</div><div class="stat-sub">Average</div></div>
-      <div class="stat-card s4" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value" id="ds-assign">—</div><div class="stat-sub" id="ds-assign-sub">Loading…</div></div>
-      <div class="stat-card s2" data-icon="📅"><div class="stat-label">Events</div><div class="stat-value" id="ds-events">—</div><div class="stat-sub">This month</div></div>`;
-  } else if (role === 'teacher' || role === 'monitor') {
+      <div class="stat-card s1" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value">92%</div><div class="stat-sub">This term</div></div>
+      <div class="stat-card s3" data-icon="📊"><div class="stat-label">My Grade</div><div class="stat-value">81.5</div><div class="stat-sub">Bible Basics avg</div></div>
+      <div class="stat-card s4" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value">2</div><div class="stat-sub">1 pending</div></div>
+      <div class="stat-card s2" data-icon="📅"><div class="stat-label">Events</div><div class="stat-value">4</div><div class="stat-sub">This month</div></div>`;
+  } else if (role === 'teacher') {
     document.getElementById('dash-stats').innerHTML = `
-      <div class="stat-card s1" data-icon="🎓"><div class="stat-label">Total Students</div><div class="stat-value" id="ds-total">—</div><div class="stat-sub">Registered</div></div>
-      <div class="stat-card s3" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value" id="ds-att">—</div><div class="stat-sub">Class average</div></div>
-      <div class="stat-card s4" data-icon="📊"><div class="stat-label">Avg Grade</div><div class="stat-value" id="ds-grade">—</div><div class="stat-sub">This term</div></div>
-      <div class="stat-card s2" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value" id="ds-assign">—</div><div class="stat-sub">Active</div></div>`;
-  } else if (role === 'admin') {
-    document.getElementById('dash-stats').innerHTML = `
-      <div class="stat-card s1" data-icon="🎓"><div class="stat-label">Total Students</div><div class="stat-value" id="ds-total">—</div><div class="stat-sub">Registered</div></div>
-      <div class="stat-card s2" data-icon="✦"><div class="stat-label">Users</div><div class="stat-value" id="ds-users">—</div><div class="stat-sub">Active accounts</div></div>
-      <div class="stat-card s3" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value" id="ds-att">—</div><div class="stat-sub">Class average</div></div>
-      <div class="stat-card s4" data-icon="📊"><div class="stat-label">Avg Grade</div><div class="stat-value" id="ds-grade">—</div><div class="stat-sub">This term</div></div>`;
-  }
-}
-
-function updateDashStats(user) {
-  const role = user.role;
-  if (role === 'student') {
-    const sid = user.studentId;
-    const s = students.find(x => x.id === sid);
-    const attEl    = document.getElementById('ds-att');
-    const gradeEl  = document.getElementById('ds-grade');
-    const assignEl = document.getElementById('ds-assign');
-    const eventsEl = document.getElementById('ds-events');
-    if (attEl)    attEl.textContent   = s ? (s.att !== undefined ? s.att + '%' : '—') : '—';
-    if (gradeEl)  gradeEl.textContent = s ? (s.grade !== undefined ? s.grade : '—') : '—';
-    if (assignEl) assignEl.textContent = assignments ? assignments.length : '—';
-    if (eventsEl) eventsEl.textContent = events ? events.filter(e => {
-      const d = new Date(e.date); const now = new Date();
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length : '—';
-  } else {
-    const totalEl = document.getElementById('ds-total');
-    const usersEl = document.getElementById('ds-users');
-    const attEl   = document.getElementById('ds-att');
-    const gradeEl = document.getElementById('ds-grade');
-    const assignEl = document.getElementById('ds-assign');
-    if (totalEl) totalEl.textContent = students.length;
-    if (usersEl) usersEl.textContent = userDB.filter(u => u.active).length;
-    const avgAtt = students.length ? Math.round(students.reduce((a,s) => a + (s.att||0), 0) / students.length) : 0;
-    const avgGrade = students.length ? Math.round(students.reduce((a,s) => a + (s.grade||0), 0) / students.length) : 0;
-    if (attEl)   attEl.textContent   = avgAtt + '%';
-    if (gradeEl) gradeEl.textContent = avgGrade;
-    if (assignEl) assignEl.textContent = assignments ? assignments.length : '—';
+      <div class="stat-card s1" data-icon="🎓"><div class="stat-label">My Students</div><div class="stat-value">14</div><div class="stat-sub">Bible Basics</div></div>
+      <div class="stat-card s3" data-icon="✅"><div class="stat-label">Attendance / አቴንዳንስ</div><div class="stat-value">87%</div><div class="stat-sub">This month</div></div>
+      <div class="stat-card s4" data-icon="📊"><div class="stat-label">Avg Grade</div><div class="stat-value">82</div><div class="stat-sub">This term</div></div>
+      <div class="stat-card s2" data-icon="📝"><div class="stat-label">Assignments</div><div class="stat-value">3</div><div class="stat-sub">Active this week</div></div>`;
   }
 }
 
@@ -1994,9 +2411,12 @@ function buildNav(role) {
   let html = '<div class="nav-label">Menu / ምናሌ</div>';
   menu.forEach(item => {
     html += `<div class="nav-item" id="nav-${item.id}" onclick="navTo('${item.id}')">
-      <span class="nav-icon">${item.icon}</span>${item.label}</div>`;
+      <span class="nav-icon">${item.icon}</span><span class="nav-label-text">${item.label}</span></div>`;
   });
   document.getElementById('nav-menu').innerHTML = html;
+  // Re-run the bilingualizer so newly-injected nav text respects the
+  // currently-selected site language (English only / Amharic only / both)
+  initLangToggle();
 }
 function navTo(id) { showPage(id); closeSidebar(); }
 function showPage(id) {
@@ -2011,6 +2431,11 @@ function showPage(id) {
   if (id === 'comments') { renderChatMessages(); }
   // Rebuild attendance list on nav
   if (id === 'attendance') { setTimeout(buildAttList, 50); }
+  // Re-scan for newly-rendered bilingual text on this page (tables, lists,
+  // admin panels, etc. are built dynamically after navigation) so the
+  // language toggle stays consistent across the whole page, not just
+  // whatever existed at first load.
+  setTimeout(bilingualizeAll, 80);
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────
@@ -2133,13 +2558,11 @@ function saveAttendance() {
 // ── GRADES ────────────────────────────────────────────────────
 function buildGrades() {
   const canEdit = roleConfig[currentRole].canEditGrades;
-  const defaultGrades = [[78,85,80],[90,92,88],[65,70,72],[88,91,85],[62,68,60],[79,82,78]];
   let html = '';
   students.forEach((s, i) => {
-    // Use stored grades if available, fall back to defaults, then zeros
-    const g = s.grades || defaultGrades[i] || [0, 0, 0];
-    const avg = ((g[0]+g[1]+g[2])/3).toFixed(1);
-    html += `<tr>
+    const g = s.grades && s.grades.length >= 3 ? s.grades : [0, 0, 0];
+    const avg = Math.round(g[0]*0.4 + g[1]*0.4 + g[2]*0.2);
+    html += `<tr data-sid="${s.id}">
       <td><span class="badge badge-blue">${s.id}</span></td>
       <td>${s.name}</td>
       <td><input class="grade-input" type="number" value="${g[0]}" min="0" max="100" ${canEdit?'':'disabled'} onchange="updateAvg(${i})"></td>
@@ -2191,17 +2614,11 @@ function buildStudentsTable(list) {
         <button class="btn-sm" onclick="viewStudentInfo('${s.id}')" style="background:linear-gradient(135deg,#1A3F6B,#0F2A4A);color:#fff;border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em;padding:5px 10px">👁 Info</button>
         <button class="btn-outline btn-sm" onclick="viewIDCard('${s.id}')">ID Card</button>
         ${(currentRole === 'admin' || currentRole === 'teacher') ? `<button class="btn-sm" onclick="openEditStudent('${s.id}')" style="background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--crimson-d);border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em;padding:5px 10px">✏ Edit</button>` : ''}
-        ${currentRole === 'admin' ? `<button class="btn-sm del-student-btn" data-sid="${s.id}" data-sname="${s.name.replace(/"/g,'&quot;')}" style="background:linear-gradient(135deg,var(--danger),#5A1010);color:var(--gold-ll);border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em">🗑 Delete</button>` : ''}
+        ${currentRole === 'admin' ? `<button class="btn-sm" onclick="confirmDeleteStudent('${s.id}','${s.name.replace(/'/g,"\\'")}'')" style="background:linear-gradient(135deg,var(--danger),#5A1010);color:var(--gold-ll);border:none;border-radius:7px;font-family:'Cinzel',serif;font-weight:600;cursor:pointer;letter-spacing:0.04em">🗑 Delete</button>` : ''}
       </td>
     </tr>`;
   });
   document.getElementById('students-table').innerHTML = html;
-
-  // Event delegation for delete buttons (avoids slash-in-ID breaking inline onclick)
-  document.getElementById('students-table').addEventListener('click', function(e) {
-    const btn = e.target.closest('.del-student-btn');
-    if (btn) confirmDeleteStudent(btn.dataset.sid, btn.dataset.sname);
-  }, { once: true });
 }
 
 function filterByClass(cls) {
@@ -2400,6 +2817,463 @@ function addStudent() {
   document.getElementById('s-photo-img').style.display='none';
   document.getElementById('s-photo-initials').textContent='📷';
   showPage('students');
+}
+
+// ── BULK IMPORT STUDENTS FROM PDF ───────────────────────────────
+let pdfImportRows = []; // [{name, course}]
+
+function openPdfImportModal() {
+  const sel = document.getElementById('pdf-import-default-class');
+  sel.innerHTML = allClasses.map(c => `<option value="${c}">${c}</option>`).join('');
+  const dateInput = document.getElementById('pdf-import-member-since');
+  dateInput.value = new Date().toISOString().slice(0,10);
+  document.getElementById('pdf-import-file').value = '';
+  document.getElementById('pdf-import-step1').style.display = '';
+  document.getElementById('pdf-import-step2').style.display = 'none';
+  pdfImportRows = [];
+  openModal('pdf-import-modal');
+}
+function closePdfImportModal() {
+  closeModal('pdf-import-modal');
+  pdfImportRows = [];
+}
+
+// Try to match a line of text against one of our known class names
+// (handles both the short main-class name and the full "Main — Sub" form).
+function _matchClassInLine(line) {
+  const clean = (line || '').replace(/\s+/g,' ').trim();
+  if (!clean) return null;
+
+  // 1. Exact match against a full class name
+  let exact = allClasses.find(c => clean === c);
+  if (exact) return exact;
+
+  // 2. The line contains a full class name as a substring (e.g. a PDF line
+  //    like "Class: ማዕከላዉያን 1 — ቀዳማይ መግቢያ — 12 students")
+  let best = null;
+  allClasses.forEach(c => {
+    if (clean.includes(c) && (!best || c.length > best.length)) best = c;
+  });
+  if (best) return best;
+
+  // 3. The line/cell is just the SUB-class name alone, with no main-class
+  //    prefix — e.g. a sheet named "ቀዳማይ መግቢያ" or a class column that only
+  //    has "ካልዓይ". Match it against classStructure's sub-class lists and
+  //    reconstruct the full "Main — Sub" name our other pages expect.
+  let subMatch = null;
+  Object.entries(classStructure).forEach(([mainKey, cls]) => {
+    (cls.sub || []).forEach(sub => {
+      if (clean === sub) { subMatch = mainKey + ' — ' + sub; }
+      else if (!subMatch && clean.length >= 3 && (clean.includes(sub) || sub.includes(clean))) {
+        subMatch = mainKey + ' — ' + sub;
+      }
+    });
+  });
+  if (subMatch) return subMatch;
+
+  // 4. Fall back to matching just the main class key (no sub-class),
+  //    e.g. "መቆያ" or "ሕፃናት 1ሀ" which have no sub-classes at all.
+  let mainMatch = null;
+  Object.keys(classStructure).forEach(c => {
+    if (clean === c || clean.replace(/[:：]/g,'').trim() === c) mainMatch = c;
+  });
+  return mainMatch;
+}
+
+function _looksLikeHeaderOrNoise(line) {
+  const t = line.trim();
+  if (!t) return true;
+  if (/^page\s*\d+/i.test(t)) return true;
+  if (/^ገጽ\s*\d+/.test(t)) return true;
+  if (/^\d+$/.test(t)) return true;
+  if (t.length < 2) return true;
+  return false;
+}
+
+async function extractImportFile() {
+  const fileInput = document.getElementById('pdf-import-file');
+  const file = fileInput.files[0];
+  if (!file) { showToast('Please choose a file / እባክዎ ፋይል ይምረጡ'); return; }
+
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf') {
+    await extractPdfStudents(file);
+  } else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+    await extractExcelStudents(file);
+  } else {
+    showToast('Unsupported file type. Use PDF, Excel or CSV. / ያልታወቀ ፋይል');
+  }
+}
+
+// Column header synonyms (English + Amharic) for every field on the
+// student registration form, so a bulk-upload sheet can carry more than
+// just name/class if the columns are present.
+const _importFieldPatterns = {
+  christian:        /christian|baptism|ክርስትና/,
+  dob:              /dob|date of birth|birth ?date|ልደት|የትውልድ/,
+  age:              /^age$|ዕድሜ/,
+  gender:           /gender|sex|ጾታ/,
+  phone:            /^phone$|mobile|ስልክ ቁ|^ስልክ$/,
+  localchurch:      /local ?church|አጥቢያ/,
+  subcity:          /sub ?city|ክ\/ከተማ|ክፍለ ከተማ/,
+  woreda:           /woreda|ወረዳ/,
+  houseno:          /house ?no|house ?number|ቤት ቁ/,
+  fatherName:       /father'?s? name|የአባት ስም/,
+  fatherChristian:  /father'?s? christian|የአባት ክርስትና/,
+  fatherPhone:      /father'?s? phone|የአባት ስልክ/,
+  motherName:       /mother'?s? name|የእናት ስም/,
+  motherChristian:  /mother'?s? christian|የእናት ክርስትና/,
+  motherPhone:      /mother'?s? phone|የእናት ስልክ/,
+  emergencyPhone:   /emergency|ድንገተኛ/,
+  memberSince:      /member since|registered|የተመዘገበበት/,
+};
+
+async function extractExcelStudents(file) {
+  if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
+  const btn = document.getElementById('pdf-extract-btn');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Reading file...';
+  btn.disabled = true;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const wb = XLSX.read(arrayBuffer, { type: 'array' });
+    const defaultClass = document.getElementById('pdf-import-default-class').value;
+    const rows = [];
+
+    // Scan every sheet, in case names/classes are split across class tabs
+    wb.SheetNames.forEach(sheetName => {
+      const sheet = wb.Sheets[sheetName];
+      const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false, defval: '' });
+      if (!aoa.length) return;
+
+      // Try to find a header row (within the first 3 rows) that has a name-like
+      // and class-like column so we can map by column name rather than position.
+      let headerRowIdx = -1, nameCol = -1, classCol = -1;
+      const extraCols = {}; // fieldName -> column index
+      for (let r = 0; r < Math.min(3, aoa.length); r++) {
+        const row = aoa[r].map(c => String(c).toLowerCase().trim());
+        const nc = row.findIndex(c => /name|ስም|ሙሉ/.test(c) && !/father|mother|christian|አባት|እናት|ክርስትና/.test(c));
+        const cc = row.findIndex(c => /class|course|ክፍል/.test(c));
+        if (nc !== -1) {
+          headerRowIdx = r; nameCol = nc; classCol = cc;
+          Object.entries(_importFieldPatterns).forEach(([field, pattern]) => {
+            const idx = row.findIndex(c => pattern.test(c));
+            if (idx !== -1) extraCols[field] = idx;
+          });
+          break;
+        }
+      }
+
+      let dataRows;
+      if (headerRowIdx !== -1) {
+        dataRows = aoa.slice(headerRowIdx + 1);
+      } else {
+        // No recognizable header — assume column A = name, column B = class,
+        // and that this whole sheet belongs to one class (e.g. sheet named
+        // after the class, or use the selected default).
+        nameCol = 0; classCol = 1;
+        dataRows = aoa;
+      }
+
+      // If this sheet's name matches one of our known classes, use that as
+      // the fallback for rows with no class column value.
+      const sheetClassGuess = _matchClassInLine(sheetName) || defaultClass;
+
+      dataRows.forEach(row => {
+        const name = (row[nameCol] || '').toString().trim();
+        if (!name || name.length < 2) return;
+        if (/^name$|^ስም$|^full name$/i.test(name)) return; // stray header repeat
+        let course = classCol !== -1 ? (row[classCol] || '').toString().trim() : '';
+        course = _matchClassInLine(course) || course || sheetClassGuess;
+
+        const entry = { name, course };
+        Object.entries(extraCols).forEach(([field, idx]) => {
+          const val = (row[idx] || '').toString().trim();
+          if (val) entry[field] = val;
+        });
+        rows.push(entry);
+      });
+    });
+
+    if (!rows.length) {
+      showToast('No names detected — you can add rows manually below / ስም አልተገኘም');
+    }
+
+    pdfImportRows = rows;
+    renderPdfImportRows();
+    document.getElementById('pdf-import-step1').style.display = 'none';
+    document.getElementById('pdf-import-step2').style.display = '';
+  } catch (err) {
+    console.error('extractExcelStudents error:', err);
+    showToast('⚠ Could not read that file: ' + err.message);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+async function extractPdfStudents(file) {
+  if (typeof pdfjsLib === 'undefined') { showToast('PDF library still loading... retry / ቆይ ዳግም ሞክር'); return; }
+
+  const btn = document.getElementById('pdf-extract-btn');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Reading PDF...';
+  btn.disabled = true;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    const allLines = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const textContent = await page.getTextContent();
+      let lastY = null, currentLine = '';
+      textContent.items.forEach(item => {
+        const y = item.transform[5];
+        if (lastY !== null && Math.abs(y - lastY) > 2) {
+          if (currentLine.trim()) allLines.push(currentLine.trim());
+          currentLine = '';
+        }
+        currentLine += item.str + ' ';
+        lastY = y;
+      });
+      if (currentLine.trim()) allLines.push(currentLine.trim());
+    }
+
+    const defaultClass = document.getElementById('pdf-import-default-class').value;
+    let currentClass = defaultClass;
+    const rows = [];
+
+    allLines.forEach(rawLine => {
+      if (_looksLikeHeaderOrNoise(rawLine)) return;
+
+      const detectedClass = _matchClassInLine(rawLine);
+
+      // If the ENTIRE line (after stripping numbering/punctuation) is just a
+      // class name, treat it as a section heading and don't add it as a student.
+      const strippedForHeading = rawLine.replace(/^[\d.\)\-–•\s]+/, '').trim();
+      if (detectedClass && strippedForHeading === detectedClass) {
+        currentClass = detectedClass;
+        return;
+      }
+
+      // Otherwise, strip a leading class label + leading numbering/bullets to get the name
+      let name = rawLine;
+      if (detectedClass) name = name.replace(detectedClass, '');
+      name = name.replace(/^[\d.\)\-–•\s]+/, '').trim();
+      name = name.replace(/[,\-–]\s*$/, '').trim();
+
+      if (!name || name.length < 2) return;
+
+      rows.push({ name, course: detectedClass || currentClass || defaultClass });
+    });
+
+    if (!rows.length) {
+      showToast('No names detected — you can add rows manually below / ስም አልተገኘም');
+    }
+
+    pdfImportRows = rows;
+    renderPdfImportRows();
+    document.getElementById('pdf-import-step1').style.display = 'none';
+    document.getElementById('pdf-import-step2').style.display = '';
+  } catch (err) {
+    console.error('extractPdfStudents error:', err);
+    showToast('⚠ Could not read that PDF: ' + err.message);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+const _importDetailFields = [
+  ['christian',"Christian Name",'ክርስትና ስም'],
+  ['dob',"Date of Birth",'የትውልድ ቀን', 'date'],
+  ['age',"Age",'ዕድሜ', 'number'],
+  ['gender',"Gender",'ጾታ'],
+  ['phone',"Phone",'ስልክ'],
+  ['localchurch',"Local Church",'አጥቢያ'],
+  ['subcity',"Sub-city",'ክፍለ ከተማ'],
+  ['woreda',"Woreda",'ወረዳ'],
+  ['houseno',"House No",'ቤት ቁጥር'],
+  ['fatherName',"Father's Name",'የአባት ስም'],
+  ['fatherChristian',"Father's Christian Name",'የአባት ክርስትና ስም'],
+  ['fatherPhone',"Father's Phone",'የአባት ስልክ'],
+  ['motherName',"Mother's Name",'የእናት ስም'],
+  ['motherChristian',"Mother's Christian Name",'የእናት ክርስትና ስም'],
+  ['motherPhone',"Mother's Phone",'የእናት ስልክ'],
+  ['emergencyPhone',"Emergency Phone",'ድንገተኛ ስልክ'],
+];
+let _pdfDetailEditIdx = null;
+
+function _pdfImportFilledCount(row) {
+  return _importDetailFields.reduce((n, [key]) => n + (row[key] ? 1 : 0), 0);
+}
+
+function openPdfImportDetail(i) {
+  _pdfDetailEditIdx = i;
+  const row = pdfImportRows[i];
+  document.getElementById('pdf-detail-name').textContent = row.name || '(unnamed)';
+  const container = document.getElementById('pdf-detail-fields');
+  container.innerHTML = _importDetailFields.map(([key, enLabel, amLabel, type]) => `
+    <div class="field-group">
+      <label>${enLabel} <span class="amh-lbl">${amLabel||''}</span></label>
+      <input type="${type||'text'}" id="pdf-detail-${key}" value="${(row[key]||'').toString().replace(/"/g,'&quot;')}">
+    </div>
+  `).join('');
+  openModal('pdf-import-detail-modal');
+}
+function closePdfImportDetailModal() {
+  closeModal('pdf-import-detail-modal');
+  _pdfDetailEditIdx = null;
+}
+function savePdfImportDetail() {
+  if (_pdfDetailEditIdx === null) return;
+  const row = pdfImportRows[_pdfDetailEditIdx];
+  _importDetailFields.forEach(([key]) => {
+    const el = document.getElementById('pdf-detail-' + key);
+    if (el) row[key] = el.value.trim();
+  });
+  closePdfImportDetailModal();
+  renderPdfImportRows();
+  showToast('Details saved / ዝርዝር ተቀምጧል');
+}
+
+function renderPdfImportRows() {
+  const tbody = document.getElementById('pdf-import-rows');
+  document.getElementById('pdf-row-count').textContent = pdfImportRows.length;
+  tbody.innerHTML = pdfImportRows.map((r, i) => {
+    const filled = _pdfImportFilledCount(r);
+    return `
+    <tr>
+      <td><input type="text" value="${(r.name||'').replace(/"/g,'&quot;')}" oninput="pdfImportRows[${i}].name=this.value" style="width:100%;padding:6px 8px;border:1px solid var(--parchment-dd);border-radius:6px;font-family:'EB Garamond',serif;"></td>
+      <td>
+        <select onchange="pdfImportRows[${i}].course=this.value" style="width:100%;padding:6px 8px;border:1px solid var(--parchment-dd);border-radius:6px;font-family:'EB Garamond',serif;">
+          ${allClasses.map(c => `<option value="${c}" ${c===r.course?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <button class="btn-sm" onclick="openPdfImportDetail(${i})" style="padding:5px 10px;font-size:12px;background:${filled?'var(--success)':'var(--parchment-d)'};border:none;border-radius:6px;cursor:pointer;color:${filled?'#fff':'var(--ink-mid)'};white-space:nowrap;">
+          ✎ ${filled ? filled + ' filled' : 'Add info'}
+        </button>
+      </td>
+      <td><button class="btn-sm" onclick="removePdfImportRow(${i})" style="padding:5px 10px;font-size:12px;background:var(--danger);border:none;border-radius:6px;cursor:pointer;color:#fff;">🗑</button></td>
+    </tr>
+  `;
+  }).join('');
+}
+
+function addPdfImportRow() {
+  const defaultClass = document.getElementById('pdf-import-default-class')?.value || allClasses[0];
+  pdfImportRows.push({ name: '', course: defaultClass });
+  renderPdfImportRows();
+}
+function removePdfImportRow(i) {
+  pdfImportRows.splice(i, 1);
+  renderPdfImportRows();
+}
+
+function generateBulkStudentPassword() {
+  const n = 1000 + Math.floor(Math.random() * 9000);
+  return 'Senbet@' + n;
+}
+
+async function registerPdfImportStudents() {
+  const batchMemberSince = document.getElementById('pdf-import-member-since').value || new Date().toISOString().slice(0,10);
+  const validRows = pdfImportRows.filter(r => r.name && r.name.trim() && r.course);
+
+  if (!validRows.length) { showToast('No valid rows to register / የሚያስመዘግብ ረድፍ የለም'); return; }
+
+  const results = []; // {name, id, course, password}
+  const skipped = [];
+
+  validRows.forEach(row => {
+    const name = row.name.trim();
+    // Skip obvious duplicates (same name already registered in that class)
+    const dup = students.find(s => s.name === name && s.course === row.course);
+    if (dup) { skipped.push(name); return; }
+
+    const memberSince = row.memberSince || batchMemberSince;
+    const newId = generateStudentId(memberSince, students);
+    const password = generateBulkStudentPassword();
+
+    const newStudent = {
+      id: newId, memberSince, name, christian: row.christian || '', course: row.course,
+      dob: row.dob || '', age: row.age ? (parseInt(row.age) || row.age) : '',
+      gender: row.gender || '', phone: row.phone || '',
+      localchurch: row.localchurch || '', subcity: row.subcity || '',
+      woreda: row.woreda || '', houseno: row.houseno || '',
+      fatherName: row.fatherName || '', fatherChristian: row.fatherChristian || '', fatherPhone: row.fatherPhone || '',
+      motherName: row.motherName || '', motherChristian: row.motherChristian || '', motherPhone: row.motherPhone || '',
+      emergencyPhone: row.emergencyPhone || '',
+      att: 0, grade: 0, grades: null, photo: null
+    };
+    students.push(newStudent);
+    userDB.push({ username: newId, pwHash: simpleHash(password), role: 'student', name, active: true, studentId: newId });
+
+    results.push({ name, id: newId, course: row.course, password });
+  });
+
+  if (!results.length) {
+    showToast('All rows were duplicates of existing students / ሁሉም ቀድሞ ተመዝግበዋል');
+    return;
+  }
+
+  await saveStudentsToFirebase();
+  await saveUsersToFirebase();
+  buildStudentsTable(students);
+  buildUserManagementTable();
+  populateStudentLink && populateStudentLink();
+
+  downloadBulkImportExcel(results);
+
+  const skipMsg = skipped.length ? ` (${skipped.length} duplicate skipped)` : '';
+  showToast(`☩ ${results.length} students registered!${skipMsg} 📥`);
+  closePdfImportModal();
+}
+
+function downloadBulkImportExcel(results) {
+  if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const generatedStamp = new Date().toLocaleString('en-GB');
+
+  // All students, one sheet
+  const allRows = [
+    ['ፍሬ-ሃይማኖት — Newly Registered Students / አዲስ የተመዘገቡ ተማሪዎች'],
+    ['Generated / የተሰራበት: ' + generatedStamp],
+    [],
+    ['Full Name / ሙሉ ስም', 'Student ID / መለያ ቁጥር', 'Class / ክፍል', 'Password / የይለፍ ቃል'],
+    ...results.map(r => [r.name, r.id, r.course, r.password]),
+  ];
+  const wsAll = XLSX.utils.aoa_to_sheet(allRows);
+  wsAll['!cols'] = [{wch:26},{wch:14},{wch:32},{wch:16}];
+  wsAll['!merges'] = [{s:{r:0,c:0},e:{r:0,c:3}},{s:{r:1,c:0},e:{r:1,c:3}}];
+  XLSX.utils.book_append_sheet(wb, wsAll, 'All New Students');
+
+  // One sheet per class
+  const classesInBatch = [...new Set(results.map(r => r.course))];
+  classesInBatch.forEach(cls => {
+    const clsRows = results.filter(r => r.course === cls);
+    const sheetData = [
+      ['ፍሬ-ሃይማኖት — ' + cls],
+      ['Generated / የተሰራበት: ' + generatedStamp],
+      [],
+      ['Full Name / ሙሉ ስም', 'Student ID / መለያ ቁጥር', 'Password / የይለፍ ቃል'],
+      ...clsRows.map(r => [r.name, r.id, r.password]),
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    ws['!cols'] = [{wch:26},{wch:14},{wch:16}];
+    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}];
+    const sheetName = cls.replace(/[\\/:?*\[\]]/g,'').slice(0,30);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  const pad = n => String(n).padStart(2,'0');
+  const now = new Date();
+  const stamp = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'_'+pad(now.getHours())+'-'+pad(now.getMinutes());
+  XLSX.writeFile(wb, `FH_New_Students_${stamp}.xlsx`);
 }
 
 // ── ASSIGNMENTS ───────────────────────────────────────────────
@@ -2654,145 +3528,247 @@ function exportToExcel() {
   showToast('ፋይሉ ተወርዷል! / Downloaded! 📥');
 }
 
-// ── 5-MONTH ATTENDANCE EXCEL (classified by class) ────────────
-function exportAttendanceExcel() {
+// ── REAL ATTENDANCE EXCEL EXPORT (Daily / Weekly / Monthly, from Firestore) ──
+function _attParseDate(dateStr) {
+  if (!dateStr) return null;
+  // Handles 'YYYY-MM-DD' (from <input type=date>) and common fallback formats
+  let d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function _attFmt(d) {
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function _attTimestampSuffix() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const datePart = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  const timePart = pad(now.getHours())+'-'+pad(now.getMinutes());
+  return datePart + '_' + timePart;
+}
+
+async function exportAttendanceExcel(period) {
+  period = period || 'monthly';
   if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
 
-  // Generate 5 months of attendance data (Jan–May 2025, 4 Sundays each)
-  const months = [
-    { name:'January / ጥር',   sundays:['Jan 05','Jan 12','Jan 19','Jan 26'] },
-    { name:'February / የካቲት', sundays:['Feb 02','Feb 09','Feb 16','Feb 23'] },
-    { name:'March / መጋቢት',   sundays:['Mar 02','Mar 09','Mar 16','Mar 23'] },
-    { name:'April / ሚያዚያ',   sundays:['Apr 06','Apr 13','Apr 20','Apr 27'] },
-    { name:'May / ግንቦት',     sundays:['May 04','May 11','May 18','May 25'] },
-  ];
+  showToast('⏳ Loading attendance data... / እየጫነ ነው...');
 
-  // Seed random but deterministic attendance per student per sunday
-  function seedRand(sid, sunday) {
-    let h = 0;
-    for (let c of (sid+sunday)) { h = ((h<<5)-h)+c.charCodeAt(0); h|=0; }
-    return Math.abs(h) % 10;
+  let allDocs = [];
+  try {
+    await waitForFirebase();
+    const { collection, getDocs } = window._fsHelpers;
+    const snap = await getDocs(collection(window._db, 'attendance'));
+    allDocs = snap.docs.map(d => d.data());
+  } catch (err) {
+    console.error('exportAttendanceExcel load error:', err);
+    showToast('⚠ Could not load attendance: ' + err.message);
+    return;
   }
 
+  if (!allDocs.length) {
+    showToast('No attendance records found yet / ገና የተመዘገበ አቴንዳንስ የለም');
+    return;
+  }
+
+  // Reference date = whatever is selected in the date picker, else today
+  const pickerVal = document.getElementById('att-date')?.value;
+  const refDate = _attParseDate(pickerVal) || (() => { const t = new Date(); t.setHours(0,0,0,0); return t; })();
+
+  // Determine range [start, end] inclusive, based on period
+  let start, end, periodLabel;
+  if (period === 'daily') {
+    start = new Date(refDate); end = new Date(refDate);
+    periodLabel = 'Daily / ዕለታዊ — ' + _attFmt(refDate);
+  } else if (period === 'weekly') {
+    end = new Date(refDate);
+    start = new Date(refDate); start.setDate(start.getDate() - 6);
+    periodLabel = 'Weekly / ሳምንታዊ — ' + _attFmt(start) + ' to ' + _attFmt(end);
+  } else if (period === 'monthly') {
+    start = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+    end   = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
+    periodLabel = 'Monthly / ወርሃዊ — ' + refDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  } else { // yearly
+    start = new Date(refDate.getFullYear(), 0, 1);
+    end   = new Date(refDate.getFullYear(), 11, 31);
+    periodLabel = 'Yearly / ዓመታዊ — ' + refDate.getFullYear();
+  }
+
+  // Filter docs whose date falls within range
+  const filtered = allDocs.filter(rec => {
+    const d = _attParseDate(rec.date);
+    if (!d) return false;
+    return d >= start && d <= end;
+  }).sort((a,b) => _attParseDate(a.date) - _attParseDate(b.date));
+
+  if (!filtered.length) {
+    showToast('No attendance records found for this ' + period + ' period / ለዚህ ጊዜ መዝገብ የለም');
+    return;
+  }
+
+  // Unique sorted session dates in range
+  const sessionDates = [...new Set(filtered.map(r => r.date))].sort((a,b) => _attParseDate(a) - _attParseDate(b));
+
   const wb = XLSX.utils.book_new();
-  wb.Props = { Title:'5-Month Attendance / 5-ወር አቴንዳንስ Report', Author:'ፍሬ-ሃይማኖት ሰ/ት/ቤ' };
+  wb.Props = { Title: 'Attendance Report / የአቴንዳንስ ሪፖርት', Author: 'ፍሬ-ሃይማኖት ሰ/ት/ቤ' };
 
-  const classes = [...new Set(students.map(s=>s.course))].sort();
+  const generatedStamp = new Date().toLocaleString('en-GB');
 
-  // ── OVERVIEW SHEET ──────────────────────────────────────────
+  // ── OVERVIEW SHEET ──
   const overviewRows = [
     ['ፍሬ-ሃይማኖት — የሰንበት ትምህርት ቤት'],
-    ['5-Month Attendance Report / 5-ወር አቴንዳንስ ሪፖርት'],
-    ['Generated / የተሰራበት: ' + new Date().toLocaleDateString('en-GB')],
+    ['Attendance Report / አቴንዳንስ ሪፖርት — ' + periodLabel],
+    ['Generated / የተሰራበት: ' + generatedStamp],
+    ['Sessions included / የተካተቱ ቀናት: ' + sessionDates.map(_attFmt).join(', ')],
     [],
-    ['Class / ክፍል','Total Students / ተማሪዎች','Avg Attendance % / አማካኝ አቴንዳንስ','Best Month / ምርጥ ወር','Lowest Month / ዝቅተኛ ወር'],
+    ['Class / ክፍል','Sessions / ቀናት','Students Marked / የተመዘገቡ','Present / ተገኝቷል','Absent / አልተገኘም','Permission / ፈቃድ','Avg %'],
   ];
 
-  classes.forEach(cls => {
-    const grp = students.filter(s=>s.course===cls);
-    if (!grp.length) return;
-    const monthAvgs = months.map(m => {
-      const vals = grp.flatMap(s => m.sundays.map(d => seedRand(s.id,d)<2 ? 0 : 1));
-      return +(vals.reduce((a,b)=>a+b,0)/vals.length*100).toFixed(1);
-    });
-    const best = months[monthAvgs.indexOf(Math.max(...monthAvgs))].name;
-    const low  = months[monthAvgs.indexOf(Math.min(...monthAvgs))].name;
-    const overallAvg = +(monthAvgs.reduce((a,b)=>a+b,0)/monthAvgs.length).toFixed(1);
-    overviewRows.push([cls, grp.length, overallAvg+'%', best, low]);
+  const classesInRange = [...new Set(filtered.map(r => r.course).filter(Boolean))].sort();
+  classesInRange.forEach(cls => {
+    const clsDocs = filtered.filter(r => r.course === cls);
+    let present=0, absent=0, perm=0, total=0;
+    clsDocs.forEach(doc => (doc.records||[]).forEach(r => {
+      total++;
+      if (r.status === 'present') present++;
+      else if (r.status === 'absent') absent++;
+      else if (r.status === 'permission') perm++;
+    }));
+    const pts = present + perm*0.5;
+    const avgPct = total ? (pts/total*100).toFixed(1) : '0.0';
+    overviewRows.push([cls, clsDocs.length, total, present, absent, perm, avgPct+'%']);
   });
 
   const wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
-  wsOverview['!cols'] = [{wch:36},{wch:18},{wch:24},{wch:22},{wch:22}];
+  wsOverview['!cols'] = [{wch:36},{wch:14},{wch:20},{wch:14},{wch:14},{wch:14},{wch:10}];
   XLSX.utils.book_append_sheet(wb, wsOverview, 'Overview');
 
-  // ── ONE SHEET PER CLASS ──────────────────────────────────────
-  classes.forEach(cls => {
-    const grp = students.filter(s=>s.course===cls);
-    if (!grp.length) return;
+  // Month labels used only for yearly aggregate sheets
+  const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    // Header rows
-    const headerRow1 = ['', '', ...months.flatMap(m => [m.name, ...Array(m.sundays.length-1).fill(''),'Total','%'])];
-    const headerRow2 = ['Student ID','ሙሉ ስም / Full Name', ...months.flatMap(m => [...m.sundays,'','']),'Grand Total','Overall %'];
+  // ── ONE SHEET PER CLASS ──
+  // Daily/Weekly/Monthly: student x session-date grid (P/A/🕐 per session)
+  // Yearly: student x month grid (attendance % per month) — a day-by-day
+  // grid across a full year would be unreadably wide, so we roll up by month.
+  classesInRange.forEach(cls => {
+    const classStudents = students.filter(s => s.course === cls);
+    if (!classStudents.length) return;
 
-    const dataRows = grp.map(s => {
-      const row = [s.id, s.name];
-      let grandTotal = 0, grandPossible = 0;
-      months.forEach(m => {
-        let mTotal = 0;
-        m.sundays.forEach(d => {
-          const present = seedRand(s.id,d) >= 2 ? 1 : 0;
-          row.push(present ? 'P' : 'A');
-          mTotal += present;
-          grandTotal += present;
-          grandPossible++;
+    let sheetData, colWidths, totalCols;
+
+    if (period === 'yearly') {
+      const clsFiltered = filtered.filter(r => r.course === cls);
+      const header = ['Student ID','ሙሉ ስም / Full Name', ...monthLabels.map(m => m+' %'), 'Present','Absent','Permission','Overall %'];
+      const dataRows = classStudents.map(s => {
+        const row = [s.id, s.name];
+        let yPresent=0, yAbsent=0, yPerm=0, yMarked=0;
+        for (let m = 0; m < 12; m++) {
+          const monthDocs = clsFiltered.filter(doc => _attParseDate(doc.date).getMonth() === m);
+          let mPresent=0, mPerm=0, mMarked=0;
+          monthDocs.forEach(doc => {
+            const rec = (doc.records||[]).find(r => r.studentId === s.id);
+            if (!rec) return;
+            mMarked++; yMarked++;
+            if (rec.status === 'present') { mPresent++; yPresent++; }
+            else if (rec.status === 'permission') { mPerm++; yPerm++; }
+            else { yAbsent++; }
+          });
+          const mPts = mPresent + mPerm*0.5;
+          row.push(mMarked ? (mPts/mMarked*100).toFixed(0)+'%' : '—');
+        }
+        const yPts = yPresent + yPerm*0.5;
+        const overall = yMarked ? (yPts/yMarked*100).toFixed(1) : '0.0';
+        row.push(yPresent, yAbsent, yPerm, overall+'%');
+        return row;
+      });
+      sheetData = [
+        ['ፍሬ-ሃይማኖት — ' + cls],
+        [periodLabel],
+        [],
+        header,
+        ...dataRows,
+        [],
+        ['Each month column shows attendance % for that month  |  — = no sessions recorded that month'],
+      ];
+      colWidths = [{wch:14},{wch:22}, ...monthLabels.map(()=>({wch:8})), {wch:9},{wch:9},{wch:11},{wch:10}];
+      totalCols = 2 + monthLabels.length + 4;
+    } else {
+      const clsDocsByDate = {};
+      filtered.filter(r => r.course === cls).forEach(doc => { clsDocsByDate[doc.date] = doc; });
+      const header = ['Student ID','ሙሉ ስም / Full Name', ...sessionDates.map(_attFmt), 'Present','Absent','Permission','Total %'];
+      const dataRows = classStudents.map(s => {
+        const row = [s.id, s.name];
+        let present=0, absent=0, perm=0, marked=0;
+        sessionDates.forEach(sd => {
+          const doc = clsDocsByDate[sd];
+          const rec = doc && (doc.records||[]).find(r => r.studentId === s.id);
+          if (!rec) { row.push('—'); return; }
+          marked++;
+          if (rec.status === 'present') { row.push('P'); present++; }
+          else if (rec.status === 'permission') { row.push('🕐'); perm++; }
+          else { row.push('A'); absent++; }
         });
-        row.push(mTotal);
-        row.push((mTotal/m.sundays.length*100).toFixed(0)+'%');
+        const pts = present + perm*0.5;
+        const pct = marked ? (pts/marked*100).toFixed(1) : '0.0';
+        row.push(present, absent, perm, pct+'%');
+        return row;
       });
-      row.push(grandTotal);
-      row.push((grandTotal/grandPossible*100).toFixed(1)+'%');
-      return row;
-    });
-
-    // Summary row
-    const summaryRow = ['','SUMMARY / ማጠቃለያ'];
-    months.forEach(m => {
-      m.sundays.forEach(() => {
-        const colPresent = dataRows.map(r => r[summaryRow.length] === 'P' ? 1 : 0);
-        summaryRow.push(colPresent.reduce((a,b)=>a+b,0)+'/'+grp.length);
-      });
-      summaryRow.push('','');
-    });
-
-    const sheetData = [
-      ['ፍሬ-ሃይማኖት — ' + cls],
-      ['5-Month Attendance / 5-ወር አቴንዳንስ'],
-      [],
-      headerRow1,
-      headerRow2,
-      ...dataRows,
-      [],
-      ['P = Present / ተገኝቷል  |  A = Absent / አልተገኘም'],
-    ];
+      sheetData = [
+        ['ፍሬ-ሃይማኖት — ' + cls],
+        [periodLabel],
+        [],
+        header,
+        ...dataRows,
+        [],
+        ['P = Present / ተገኝቷል  |  A = Absent / አልተገኘም  |  🕐 = Permission / ፈቃድ  |  — = No session record'],
+      ];
+      colWidths = [{wch:14},{wch:22}, ...sessionDates.map(()=>({wch:11})), {wch:9},{wch:9},{wch:11},{wch:9}];
+      totalCols = 2 + sessionDates.length + 4;
+    }
 
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
-
-    // Column widths
-    ws['!cols'] = [
-      {wch:14},{wch:22},
-      ...Array(months.length*(4+2)).fill({wch:6}),
-      {wch:12},{wch:10}
-    ];
-
-    // Merge class title across all columns
-    const totalCols = 2 + months.length*(4+2) + 2;
+    ws['!cols'] = colWidths;
     ws['!merges'] = [
       {s:{r:0,c:0},e:{r:0,c:totalCols-1}},
       {s:{r:1,c:0},e:{r:1,c:totalCols-1}},
     ];
-
-    // Safe sheet name (max 31 chars, no special chars)
     const sheetName = cls.replace(/[\\/:?*\[\]]/g,'').slice(0,30);
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
   });
 
-  // ── ALL STUDENTS SUMMARY SHEET ────────────────────────────────
-  const summaryHeader = ['Student ID','ሙሉ ስም','ክፍል', ...months.map(m=>m.name.split(' /')[0]+' %'),'Overall %'];
+  // ── ALL STUDENTS SUMMARY SHEET ──
+  const summaryHeader = ['Student ID','ሙሉ ስም','ክፍል','Sessions Marked','Present','Absent','Permission','Attendance %'];
   const summaryData = students.map(s => {
-    const monthPcts = months.map(m => {
-      const vals = m.sundays.map(d => seedRand(s.id,d)>=2?1:0);
-      return (vals.reduce((a,b)=>a+b,0)/vals.length*100).toFixed(1)+'%';
+    let present=0, absent=0, perm=0, marked=0;
+    sessionDates.forEach(sd => {
+      const doc = filtered.find(r => r.date === sd && r.course === s.course);
+      const rec = doc && (doc.records||[]).find(r => r.studentId === s.id);
+      if (!rec) return;
+      marked++;
+      if (rec.status === 'present') present++;
+      else if (rec.status === 'permission') perm++;
+      else absent++;
     });
-    const all = months.flatMap(m=>m.sundays.map(d=>seedRand(s.id,d)>=2?1:0));
-    const overall = (all.reduce((a,b)=>a+b,0)/all.length*100).toFixed(1)+'%';
-    return [s.id, s.name, s.course, ...monthPcts, overall];
+    const pts = present + perm*0.5;
+    const pct = marked ? (pts/marked*100).toFixed(1) : '0.0';
+    return [s.id, s.name, s.course, marked, present, absent, perm, pct+'%'];
   });
-  const wsSummary = XLSX.utils.aoa_to_sheet([summaryHeader,...summaryData]);
-  wsSummary['!cols'] = [{wch:14},{wch:22},{wch:32},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12}];
+  const wsSummary = XLSX.utils.aoa_to_sheet([
+    ['ፍሬ-ሃይማኖት — All Students Attendance Summary'],
+    [periodLabel],
+    [],
+    summaryHeader,
+    ...summaryData
+  ]);
+  wsSummary['!cols'] = [{wch:14},{wch:22},{wch:32},{wch:14},{wch:10},{wch:10},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb, wsSummary, 'All Students');
 
-  XLSX.writeFile(wb, 'FH_5Month_Attendance.xlsx');
-  showToast('5-Month Excel ወርዷል! 📊');
+  const periodTag = period.charAt(0).toUpperCase() + period.slice(1);
+  const filename = `FH_Attendance_${periodTag}_${_attTimestampSuffix()}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  showToast(`📥 ${periodTag} attendance exported! / ወርዷል 📊`);
 }
 
 function exportGradesExcel() {
@@ -3034,116 +4010,21 @@ function doResetPassword() {
 }
 
 // ── LOAD STUDENT PROFILE for logged-in student ─────────────────
-async function loadStudentProfile(sid) {
-  // Wait for Firebase then find student
-  await waitForFirebase();
-
-  // If not in local array yet, wait briefly for Firebase load to populate it
-  let s = students.find(x => x.id === sid);
-  if (!s) {
-    await loadStudentsFromFirebase();
-    s = students.find(x => x.id === sid);
-  }
-  if (!s) {
-    // Student not found — show "no data" gracefully
-    const els = ['profile-name','profile-id','profile-course','idc-name','idc-id','idc-course'];
-    els.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
-    return;
-  }
-
-  // ── ID Card on Students page ──
-  const idcName   = document.getElementById('idc-name');
-  const idcId     = document.getElementById('idc-id');
-  const idcCourse = document.getElementById('idc-course');
-  const idcAvatar = document.getElementById('idc-avatar');
-  if (idcName)   idcName.textContent   = s.name;
-  if (idcId)     idcId.textContent     = 'ID: ' + s.id;
-  if (idcCourse) idcCourse.textContent = s.course || '—';
-  if (idcAvatar) {
-    if (s.photo) {
-      idcAvatar.innerHTML = `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">`;
-      idcAvatar.style.position = 'relative';
-    } else {
-      idcAvatar.textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    }
-  }
-
-  // ── My Profile page ID card ──
-  const pName   = document.getElementById('profile-name');
-  const pId     = document.getElementById('profile-id');
-  const pCourse = document.getElementById('profile-course');
-  const pAvatar = document.getElementById('profile-avatar');
-  if (pName)   pName.textContent   = s.name;
-  if (pId)     pId.textContent     = 'ID: ' + s.id;
-  if (pCourse) pCourse.textContent = s.course || '—';
-  if (pAvatar) {
-    if (s.photo) {
-      pAvatar.innerHTML = `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">`;
-      pAvatar.style.position = 'relative';
-    } else {
-      pAvatar.textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    }
-  }
-
-  // ── Attendance ──
-  const attTbody = document.getElementById('profile-att-tbody');
-  if (attTbody) {
-    try {
-      const { collection, getDocs } = window._fsHelpers;
-      const snap = await getDocs(collection(window._db, 'attendance'));
-      const rows = [];
-      snap.docs.forEach(d => {
-        const rec = d.data();
-        if (!rec.records) return;
-        rec.records.filter(r => r.studentId === sid).forEach(r => {
-          const badge = r.status === 'present' ? 'badge-green' : r.status === 'permission' ? 'badge-gold' : 'badge-red';
-          rows.push(`<tr><td>${rec.date||''}</td><td>${rec.course||''}</td><td><span class="badge ${badge}">${r.status}</span></td></tr>`);
-        });
-      });
-      attTbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="3" style="text-align:center;color:var(--muted)">No attendance records yet</td></tr>';
-    } catch(e) {
-      attTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted)">Could not load attendance</td></tr>';
-    }
-  }
-
-  // ── Grades ──
-  const gradesTbody = document.getElementById('profile-grades-tbody');
-  if (gradesTbody) {
-    const g = s.grades || [];
-    if (g.length >= 3) {
-      const avg = Math.round(g[0]*0.4 + g[1]*0.4 + g[2]*0.2);
-      const badge = avg >= 90 ? 'badge-green' : avg >= 70 ? 'badge-gold' : 'badge-red';
-      gradesTbody.innerHTML = `<tr><td>${s.course||'—'}</td><td>${g[0]||0}</td><td>${g[1]||0}</td><td><span class="badge ${badge}">${avg}</span></td></tr>`;
-    } else if (typeof s.grade === 'number') {
-      const badge = s.grade >= 90 ? 'badge-green' : s.grade >= 70 ? 'badge-gold' : 'badge-red';
-      gradesTbody.innerHTML = `<tr><td>${s.course||'—'}</td><td>—</td><td>—</td><td><span class="badge ${badge}">${s.grade}</span></td></tr>`;
-    } else {
-      gradesTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">No grades recorded yet</td></tr>';
-    }
-  }
-
-  // ── Assignments ──
-  const assignDiv = document.getElementById('profile-assignments');
-  if (assignDiv) {
-    try {
-      const { collection, getDocs } = window._fsHelpers;
-      const snap = await getDocs(collection(window._db, 'assignments'));
-      const myAssigns = snap.docs.map(d=>d.data()).filter(a => !a.course || a.course === s.course || a.studentId === sid);
-      if (myAssigns.length) {
-        assignDiv.innerHTML = myAssigns.map(a => {
-          const badge = a.status === 'Submitted' ? 'badge-green' : a.status === 'Graded' ? 'badge-gold' : 'badge-red';
-          return `<div class="assign-card">
-            <div class="assign-title">${a.title||'Assignment'}</div>
-            <div class="assign-meta">Due: ${a.due||'—'} · <span class="badge ${badge}">${a.status||'Pending'}</span></div>
-            <div class="assign-desc">${a.description||''}</div>
-          </div>`;
-        }).join('');
-      } else {
-        assignDiv.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:10px 0">No assignments yet</div>';
-      }
-    } catch(e) {
-      assignDiv.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:10px 0">Could not load assignments</div>';
-    }
+function loadStudentProfile(sid) {
+  const s = students.find(x=>x.id===sid);
+  if (!s) return;
+  // Update the My Profile page
+  const card = document.querySelector('#page-profile .id-card');
+  if (!card) return;
+  card.querySelector('.id-name').textContent = s.name;
+  card.querySelector('.id-num').textContent = 'ID: '+s.id;
+  card.querySelector('.id-course').textContent = s.course;
+  const av = card.querySelector('.id-avatar');
+  if (s.photo) {
+    av.innerHTML = `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">`;
+    av.style.position='relative';
+  } else {
+    av.textContent = s.name.split(' ').map(w=>w[0]).join('').slice(0,2);
   }
 }
 
@@ -3426,8 +4307,8 @@ async function uploadPhotoToFirebase(file, studentId) {
 
 // ── SAVE/LOAD USERS (passwords) TO/FROM FIREBASE ─────────────
 async function saveUsersToFirebase() {
+  if (!window._db || !window._fsHelpers) return;
   try {
-    await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
     for (const u of userDB) {
       const safeId = u.username.replace(/\//g, '_');
@@ -3440,8 +4321,8 @@ async function saveUsersToFirebase() {
 }
 
 async function loadUsersFromFirebase() {
+  if (!window._db || !window._fsHelpers) return;
   try {
-    await waitForFirebase();
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'users'));
     if (snap.empty) return;
@@ -3449,27 +4330,23 @@ async function loadUsersFromFirebase() {
       const data = d.data();
       const idx = userDB.findIndex(u => u.username === data.username);
       if (idx !== -1) {
+        // Only update pwHash — don't overwrite roles/names defined in code
         userDB[idx].pwHash = data.pwHash;
         userDB[idx].active = data.active;
-      } else {
-        // Add newly registered students from Firebase
-        userDB.push({
-          username: data.username, pwHash: data.pwHash, role: data.role,
-          name: data.name, active: data.active, studentId: data.studentId || null
-        });
       }
     });
   } catch (err) { console.error('loadUsersFromFirebase error:', err); }
 }
 
 async function saveStudentsToFirebase() {
+  if (!window._db || !window._fsHelpers) return;
   try {
-    await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
     for (const s of students) {
       const data = { ...s };
       if (data.photo && data.photo.startsWith('blob:')) delete data.photo;
-      await setDoc(doc(window._db, 'students', s.id.replace(/\//g, '_')), data);
+      const safeId = s.id.replace(/\//g, '_');
+      await setDoc(doc(window._db, 'students', safeId), data);
     }
     showToast('☩ Students saved to Firebase / ተማሪዎች ተቀምጠዋል');
   } catch (err) {
@@ -3479,18 +4356,21 @@ async function saveStudentsToFirebase() {
 }
 
 async function loadStudentsFromFirebase() {
+  if (!window._db || !window._fsHelpers) return;
   try {
-    await waitForFirebase();
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'students'));
     if (snap.empty) return;
-    const loaded = snap.docs.map(d => ({ ...d.data(), id: d.data().id || d.id.replace(/_/g, '/') }));
-    // Fully replace local array with Firebase data (source of truth)
-    students.length = 0;
-    loaded.forEach(s => students.push(s));
+    const loaded = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    loaded.forEach(remote => {
+      const idx = students.findIndex(s => s.id === remote.id);
+      if (idx !== -1) students[idx] = remote;
+      else students.push(remote);
+    });
     buildStudentsTable(students);
     buildAttendance();
     buildGrades();
+    showToast('☁ Students loaded from Firebase ☩');
   } catch (err) {
     console.error('loadStudentsFromFirebase error:', err);
   }
@@ -3584,18 +4464,20 @@ async function saveAttendanceToFirebase(date, course, records) {
   try {
     await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
-    const docId = (date + '_' + course).replace(/[^\w\u1200-\u137F]/g, '-');
+    // Build safe doc ID (Ethiopic chars and slashes break Firestore paths)
+    const safeDate   = (date   || 'nodate').replace(/[^a-zA-Z0-9]/g, '-');
+    const safeCourse = (course || 'all').replace(/[^a-zA-Z0-9]/g, '-').slice(0, 40);
+    const docId      = (safeDate + '_' + safeCourse).replace(/-{2,}/g, '-').replace(/^-|-$/g, '') || ('att_' + Date.now());
     await setDoc(doc(window._db, 'attendance', docId), {
       date, course, records,
       savedBy: currentUsername,
       savedAt: new Date().toISOString()
     });
-    // After saving attendance record, recalculate each student's att% from all attendance docs
     await recalcStudentAttendance();
     showToast('☁ Attendance saved & updated ☩');
   } catch (err) {
     console.error('saveAttendanceToFirebase error:', err);
-    showToast('⚠ Could not save attendance to Firebase');
+    showToast('⚠ Could not save attendance: ' + err.message);
   }
 }
 
@@ -3606,7 +4488,6 @@ async function recalcStudentAttendance() {
     const { collection, getDocs, setDoc, doc } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'attendance'));
     if (snap.empty) return;
-    // Build map: studentId → { present: N, total: N }
     const stats = {};
     snap.docs.forEach(d => {
       const rec = d.data();
@@ -3615,11 +4496,10 @@ async function recalcStudentAttendance() {
         if (!r.studentId) return;
         if (!stats[r.studentId]) stats[r.studentId] = { pts: 0, total: 0 };
         stats[r.studentId].total += 1;
-        if (r.status === 'present')    stats[r.studentId].pts += 1;
+        if (r.status === 'present')         stats[r.studentId].pts += 1;
         else if (r.status === 'permission') stats[r.studentId].pts += 0.5;
       });
     });
-    // Update local students array and Firebase
     for (const s of students) {
       const st = stats[s.id];
       if (!st || st.total === 0) continue;
@@ -3638,39 +4518,43 @@ async function saveGradesToFirebase() {
   try {
     await waitForFirebase();
     const { setDoc, doc } = window._fsHelpers;
-    const rows = document.querySelectorAll('#grades-table tr');
-    rows.forEach((row, i) => {
-      if (!students[i]) return;
+
+    // Step 1: read DOM grades synchronously into students array
+    const rows = document.querySelectorAll('#grades-table tr[data-sid]');
+    rows.forEach(row => {
+      const sid = row.dataset.sid;
+      const s = students.find(x => x.id === sid);
+      if (!s) return;
       const inputs = row.querySelectorAll('input');
       if (inputs.length < 3) return;
       const vals = Array.from(inputs).map(inp => parseFloat(inp.value) || 0);
-      students[i].grades = vals;
-      // Compute average (midterm 40%, final 40%, assignment 20%)
-      const avg = Math.round(vals[0]*0.4 + vals[1]*0.4 + vals[2]*0.2);
-      students[i].grade = avg;
+      s.grades = vals;
+      s.grade  = Math.round(vals[0] * 0.4 + vals[1] * 0.4 + vals[2] * 0.2);
     });
+
+    // Step 2: save to Firebase (for...of supports await, forEach does not)
     for (const s of students) {
-      // Save grades doc
-      await setDoc(doc(window._db, 'grades', s.id.replace(/\//g, '_')), {
+      const safeId = s.id.replace(/\//g, '_');
+      await setDoc(doc(window._db, 'grades', safeId), {
         studentId: s.id, studentName: s.name, grades: s.grades || [],
         grade: s.grade, updatedBy: currentUsername, updatedAt: new Date().toISOString()
       });
-      // Also update student record with computed grade
-      await setDoc(doc(window._db, 'students', s.id.replace(/\//g, '_')), { grade: s.grade, grades: s.grades || [] }, { merge: true });
+      await setDoc(doc(window._db, 'students', safeId),
+        { grade: s.grade, grades: s.grades || [] }, { merge: true });
     }
     buildStudentsTable(students);
     buildGrades();
     showToast('📊 Grades saved & averages updated ☩');
   } catch (err) {
     console.error('saveGradesToFirebase error:', err);
-    showToast('⚠ Could not save grades to Firebase');
+    showToast('⚠ Could not save grades: ' + err.message);
   }
 }
 
 // Load grades from Firebase and apply to students
 async function loadGradesFromFirebase() {
+  if (!window._db || !window._fsHelpers) return;
   try {
-    await waitForFirebase();
     const { collection, getDocs } = window._fsHelpers;
     const snap = await getDocs(collection(window._db, 'grades'));
     if (snap.empty) return;
@@ -3721,13 +4605,10 @@ function listenChatRoom(room) {
 }
 
 async function deleteStudentFromFirebase(studentId) {
+  if (!window._db || !window._fsHelpers) return;
   try {
-    await waitForFirebase();
     const { deleteDoc, doc } = window._fsHelpers;
-    const safeId = studentId.replace(/\//g, '_');
-    await deleteDoc(doc(window._db, 'students', safeId));
-    await deleteDoc(doc(window._db, 'grades',   safeId));
-    await deleteDoc(doc(window._db, 'users',    safeId));
+    await deleteDoc(doc(window._db, 'students', studentId));
   } catch (err) {
     console.error('deleteStudentFromFirebase error:', err);
   }
