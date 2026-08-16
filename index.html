@@ -854,10 +854,9 @@ tr:hover td{background:rgba(245,237,216,0.5);}
           </select>
           <input type="date" id="att-date" style="padding:9px 14px;border:1.5px solid var(--parchment-dd);border-radius:9px;font-family:'EB Garamond',serif;font-size:14px;outline:none;background:var(--white);">
           <button class="btn-gold" onclick="saveAttendance()" id="att-save-btn">☩ Save / አስቀምጥ</button>
-          <button class="btn-outline" onclick="exportAttendanceExcel('daily')" id="att-export-daily-btn">📅 Daily / ዕለታዊ</button>
-          <button class="btn-outline" onclick="exportAttendanceExcel('weekly')" id="att-export-weekly-btn">🗓 Weekly / ሳምንታዊ</button>
-          <button class="btn-outline" onclick="exportAttendanceExcel('monthly')" id="att-export-monthly-btn">📆 Monthly / ወርሃዊ</button>
-          <button class="btn-outline" onclick="exportAttendanceExcel('yearly')" id="att-export-yearly-btn">🗂 Yearly / ዓመታዊ</button>
+          <button class="btn-outline" onclick="downloadCurrentAttendanceRoll()" id="att-download-current-btn" style="border-color:var(--success);color:var(--success)">📥 Download / አውርድ</button>
+          <button class="btn-outline" onclick="openCustomAttendanceExportModal()" id="att-export-custom-btn" style="border-color:var(--info);color:var(--info)">🗓 Custom / ብጁ</button>
+          <button class="btn-outline" onclick="openAttendanceAlertsModal()" id="att-alerts-btn" style="border-color:var(--danger);color:var(--danger);position:relative;">⚠ Alerts / ማንቂያ<span id="att-alerts-badge" style="display:none;position:absolute;top:-8px;right:-8px;background:var(--danger);color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;line-height:20px;text-align:center;font-weight:700;"></span></button>
           <button class="btn-outline" id="att-perm-btn" onclick="toggleAttPermPanel()" style="display:none;">🔐 Permissions / ፈቃዶች</button>
         </div>
         <div id="att-list"></div>
@@ -1274,6 +1273,61 @@ tr:hover td{background:rgba(245,237,216,0.5);}
       </div>
     </div>
 
+    <!-- ══ MODAL: CUSTOM DATE-RANGE ATTENDANCE EXPORT ══ -->
+    <div class="modal-overlay" id="custom-att-export-modal">
+      <div class="modal-box" style="max-width:520px;">
+        <button class="modal-close" onclick="closeModal('custom-att-export-modal')">✕</button>
+        <div class="modal-title">🗓 Custom Attendance Export / ብጁ የአቴንዳንስ ወደ ውጭ መላክ</div>
+        <p style="font-size:13px;color:var(--muted);margin:-6px 0 16px;">
+          Pick any date range, and optionally limit it to specific days of the week (e.g. only
+          Sundays, or only Saturdays and Sundays). / ማንኛውንም ጊዜ ይምረጡ
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="field-group">
+            <label>From <span class="amh-lbl">ከ</span></label>
+            <input type="date" id="custom-att-start">
+          </div>
+          <div class="field-group">
+            <label>To <span class="amh-lbl">እስከ</span></label>
+            <input type="date" id="custom-att-end">
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:16px;">
+          <label>Days to include (leave all checked for every day) <span class="amh-lbl">የቀናት ማጣሪያ</span></label>
+          <div id="custom-att-weekdays" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="0" checked> Sunday</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="1" checked> Monday</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="2" checked> Tuesday</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="3" checked> Wednesday</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="4" checked> Thursday</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="5" checked> Friday</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;"><input type="checkbox" value="6" checked> Saturday</label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-gold" onclick="runCustomAttendanceExport()">☩ Full Export / ሙሉ ላክ</button>
+          <button class="btn-outline" onclick="runCustomAttendanceSumExport()" style="border-color:var(--success);color:var(--success)">📊 Attendance Sum / የድምር ውጤት</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: ATTENDANCE ALERTS (CONSECUTIVE ABSENCES) ══ -->
+    <div class="modal-overlay" id="attendance-alerts-modal">
+      <div class="modal-box" style="max-width:760px;max-height:90vh;overflow-y:auto;">
+        <button class="modal-close" onclick="closeModal('attendance-alerts-modal')">✕</button>
+        <div class="modal-title">⚠ Attendance Alerts / የአቴንዳንስ ማንቂያ</div>
+        <p style="font-size:13px;color:var(--muted);margin:-6px 0 16px;">
+          Students marked <b>Inactive</b> have been absent for their last 3 or more sessions in a
+          row in their class (permission-excused sessions don't count against them). /
+          ተከታታይ 3 ጊዜ የቀሩ ተማሪዎች
+        </p>
+        <div id="attendance-alerts-content">
+          <div style="text-align:center;padding:30px;color:var(--muted);">⏳ Checking attendance records...</div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- ══ MODAL: BULK IMPORT STUDENTS FROM PDF ══ -->
     <div class="modal-overlay" id="pdf-import-modal">
       <div class="modal-box" style="max-width:820px;max-height:90vh;overflow-y:auto;">
@@ -1285,6 +1339,14 @@ tr:hover td{background:rgba(245,237,216,0.5);}
         </p>
 
         <div id="pdf-import-step1">
+          <div style="background:var(--parchment);border:1px solid var(--parchment-dd);border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+            <div style="font-size:13px;color:var(--ink-mid);margin-bottom:8px;">
+              Not sure how to lay out your file? Download a ready-made Excel template with the
+              correct column headers — Name, Class, personal info, parent info, and address — fill
+              it in and upload it back here. / አብነት ያውርዱ
+            </div>
+            <button class="btn-outline" type="button" onclick="downloadImportTemplate()" style="border-color:var(--info);color:var(--info);font-size:13px;padding:8px 14px;">📥 Download Excel Template / አብነት አውርድ</button>
+          </div>
           <div class="field-group" style="margin-bottom:14px">
             <label>File — PDF, Excel or CSV <span class="amh-lbl">ፋይል</span></label>
             <input type="file" id="pdf-import-file" accept="application/pdf,.pdf,.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv">
@@ -2430,7 +2492,7 @@ function showPage(id) {
   // Init chat on navigation
   if (id === 'comments') { renderChatMessages(); }
   // Rebuild attendance list on nav
-  if (id === 'attendance') { setTimeout(buildAttList, 50); }
+  if (id === 'attendance') { setTimeout(buildAttList, 50); _refreshAttendanceAlertsBadgeQuiet(); }
   // Re-scan for newly-rendered bilingual text on this page (tables, lists,
   // admin panels, etc. are built dynamically after navigation) so the
   // language toggle stays consistent across the whole page, not just
@@ -2726,8 +2788,10 @@ function viewStudentInfo(id) {
       ` : ''}
 
       ${sectionHead('📍 Address / አድራሻ')}
+      ${s.address ? row('Address / አድራሻ', s.address) : ''}
       ${row('Sub-City / ክፍለ ከተማ', s.subcity || '—')}
       ${row('Woreda / ወረዳ',        s.woreda  || '—')}
+      ${row('Kebele / ቀበሌ',        s.kebele  || '—')}
       ${row('House No / የቤት ቁ.',   s.houseno || '—')}
 
       ${sectionHead('👨‍👩‍👧 Parent / Guardian — ወላጅ / አሳዳጊ')}
@@ -2775,6 +2839,7 @@ function addStudent() {
   const localchurch    = document.getElementById('s-localchurch').value.trim();
   const subcity        = document.getElementById('s-subcity').value.trim();
   const woreda         = document.getElementById('s-woreda').value.trim();
+  const kebele         = document.getElementById('s-kebele').value.trim();
   const houseno        = document.getElementById('s-houseno').value.trim();
   const fatherName     = document.getElementById('s-father-name').value.trim();
   const fatherChr      = document.getElementById('s-father-christian').value.trim();
@@ -2795,7 +2860,7 @@ function addStudent() {
   const newStudent = {
     id: newId, memberSince, name: fname, christian: cn||'', course,
     dob, age: age ? parseInt(age) : '', gender, phone,
-    localchurch, subcity, woreda, houseno,
+    localchurch, subcity, woreda, kebele, houseno,
     fatherName, fatherChristian: fatherChr, fatherPhone,
     motherName, motherChristian: motherChr, motherPhone,
     emergencyPhone,
@@ -2890,6 +2955,347 @@ function _looksLikeHeaderOrNoise(line) {
   return false;
 }
 
+function downloadImportTemplate() {
+  if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
+
+  const headers = [
+    'Full Name', 'Class', 'Member Since', 'Christian Name', 'Date of Birth', 'Age', 'Gender', 'Phone', 'Address',
+    'Local Church', 'Sub-City', 'Woreda', 'Kebele', 'House No',
+    "Father's Name", "Father's Christian Name", "Father's Phone",
+    "Mother's Name", "Mother's Christian Name", "Mother's Phone",
+    'Emergency Phone',
+  ];
+  const exampleRows = [
+    ['አበበ ግርማ', 'ማዕከላዉያን 1 — ቀዳማይ መግቢያ', '2024-09-08', 'ጊዮርጊስ', '2013-05-14', 13, 'ወንድ', '0911234567', 'Bole, Addis Ababa',
+     'Debre Tsion', 'ቦሌ', 'ወረዳ 03', 'ቀበሌ 12', '145',
+     'ግርማ ተስፋዬ', 'ገብረኢየሱስ', '0911987654',
+     'ትዕግስት ለማ', 'ማርያም', '0922334455',
+     '0933445566'],
+    ['ሜሮን በቀለ', 'ቀዳማይ መግቢያ', '', '', '', 15, 'ሴት', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+  ];
+
+  const wb = XLSX.utils.book_new();
+
+  const sheetData = [
+    ['ፍሬ-ሃይማኖት — Student Bulk Import Template / የተማሪ መመዝገቢያ አብነት'],
+    ['Fill in one row per student. Only "Full Name" and "Class" are required — everything else is optional. Delete the two example rows before uploading, or just add your own rows below them.'],
+    [],
+    headers,
+    ...exampleRows,
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+  ws['!cols'] = headers.map(h => ({ wch: Math.max(14, h.length + 2) }));
+  ws['!merges'] = [
+    { s:{r:0,c:0}, e:{r:0,c:headers.length-1} },
+    { s:{r:1,c:0}, e:{r:1,c:headers.length-1} },
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Students');
+
+  // Reference sheet: every valid class name, so there's no guessing/typos.
+  // Both the full "Main — Sub" form and the sub-class name alone work.
+  const classRows = [
+    ['Valid Class Names / ትክክለኛ የክፍል ስሞች'],
+    ['You can type either the full class name, or just the sub-class part (e.g. "ቀዳማይ መግቢያ") — both will be matched correctly.'],
+    [],
+    ['Class Name'],
+    ...allClasses.map(c => [c]),
+  ];
+  const wsClasses = XLSX.utils.aoa_to_sheet(classRows);
+  wsClasses['!cols'] = [{ wch: 42 }];
+  wsClasses['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:0} }, { s:{r:1,c:0}, e:{r:1,c:0} }];
+  XLSX.utils.book_append_sheet(wb, wsClasses, 'Valid Class Names');
+
+  XLSX.writeFile(wb, 'FH_Student_Import_Template.xlsx');
+  showToast('📥 Template downloaded! / አብነት ወርዷል');
+}
+
+// ── CUSTOM DATE-RANGE ATTENDANCE EXPORT ─────────────────────────
+function openCustomAttendanceExportModal() {
+  const today = new Date();
+  const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+  const pad = n => String(n).padStart(2,'0');
+  const toIso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  document.getElementById('custom-att-start').value = toIso(monthAgo);
+  document.getElementById('custom-att-end').value = toIso(today);
+  document.querySelectorAll('#custom-att-weekdays input[type=checkbox]').forEach(cb => cb.checked = true);
+  openModal('custom-att-export-modal');
+}
+
+function runCustomAttendanceExport() {
+  const startVal = document.getElementById('custom-att-start').value;
+  const endVal = document.getElementById('custom-att-end').value;
+  if (!startVal || !endVal) { showToast('Please pick both dates / ሁለቱንም ቀናት ይምረጡ'); return; }
+
+  const weekdays = Array.from(document.querySelectorAll('#custom-att-weekdays input[type=checkbox]:checked'))
+    .map(cb => parseInt(cb.value));
+  if (!weekdays.length) { showToast('Pick at least one day / ቢያንስ አንድ ቀን ይምረጡ'); return; }
+
+  closeModal('custom-att-export-modal');
+  exportAttendanceExcel('custom', { customStart: startVal, customEnd: endVal, weekdays });
+}
+
+function runCustomAttendanceSumExport() {
+  const startVal = document.getElementById('custom-att-start').value;
+  const endVal = document.getElementById('custom-att-end').value;
+  if (!startVal || !endVal) { showToast('Please pick both dates / ሁለቱንም ቀናት ይምረጡ'); return; }
+
+  const weekdays = Array.from(document.querySelectorAll('#custom-att-weekdays input[type=checkbox]:checked'))
+    .map(cb => parseInt(cb.value));
+  if (!weekdays.length) { showToast('Pick at least one day / ቢያንስ አንድ ቀን ይምረጡ'); return; }
+
+  closeModal('custom-att-export-modal');
+  exportAttendanceSum({ customStart: startVal, customEnd: endVal, weekdays });
+}
+
+// Lightweight single-sheet export: just each student's totals (Present /
+// Absent / Permission / Attendance %) for the chosen range — no per-class
+// breakdown sheets, plus a grand-total row at the bottom.
+async function exportAttendanceSum(opts) {
+  opts = opts || {};
+  if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
+
+  showToast('⏳ Loading attendance data... / እየጫነ ነው...');
+
+  let allDocs = [];
+  try {
+    await waitForFirebase();
+    const { collection, getDocs } = window._fsHelpers;
+    const snap = await getDocs(collection(window._db, 'attendance'));
+    allDocs = snap.docs.map(d => d.data());
+  } catch (err) {
+    console.error('exportAttendanceSum load error:', err);
+    showToast('⚠ Could not load attendance: ' + err.message);
+    return;
+  }
+
+  const start = _attParseDate(opts.customStart);
+  const end = _attParseDate(opts.customEnd);
+  if (!start || !end) { showToast('Please pick both a start and end date / እባክዎ ሁለቱንም ቀናት ይምረጡ'); return; }
+
+  let filtered = allDocs.filter(rec => {
+    const d = _attParseDate(rec.date);
+    return d && d >= start && d <= end;
+  });
+
+  let periodLabel = _attFmt(start) + ' to ' + _attFmt(end);
+  if (opts.weekdays && opts.weekdays.length && opts.weekdays.length < 7) {
+    const weekdaySet = new Set(opts.weekdays);
+    filtered = filtered.filter(rec => {
+      const d = _attParseDate(rec.date);
+      return d && weekdaySet.has(d.getDay());
+    });
+    const weekdayNamesFull = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    periodLabel += ' (' + opts.weekdays.map(w => weekdayNamesFull[w]).join(', ') + ' only)';
+  }
+
+  if (!filtered.length) {
+    showToast('No attendance records found for that range / ለዚህ ጊዜ መዝገብ የለም');
+    return;
+  }
+
+  const sessionDates = [...new Set(filtered.map(r => r.date))];
+
+  const summaryData = students.map(s => {
+    let present=0, absent=0, perm=0, marked=0;
+    sessionDates.forEach(sd => {
+      const doc = filtered.find(r => r.date === sd && r.course === s.course);
+      const rec = doc && (doc.records||[]).find(r => r.studentId === s.id);
+      if (!rec) return;
+      marked++;
+      if (rec.status === 'present') present++;
+      else if (rec.status === 'permission') perm++;
+      else absent++;
+    });
+    const pts = present + perm*0.5;
+    const pct = marked ? (pts/marked*100).toFixed(1) : '0.0';
+    return { id: s.id, name: s.name, course: s.course, marked, present, absent, perm, pct };
+  }).filter(row => row.marked > 0); // only students who had at least one session in this range
+
+  if (!summaryData.length) {
+    showToast('No students had sessions in that range / ተማሪ አልተገኘም');
+    return;
+  }
+
+  const grand = summaryData.reduce((acc, r) => {
+    acc.marked += r.marked; acc.present += r.present; acc.absent += r.absent; acc.perm += r.perm;
+    return acc;
+  }, { marked:0, present:0, absent:0, perm:0 });
+  const grandPts = grand.present + grand.perm*0.5;
+  const grandPct = grand.marked ? (grandPts/grand.marked*100).toFixed(1) : '0.0';
+
+  const generatedStamp = new Date().toLocaleString('en-GB');
+  const rows = [
+    ['ፍሬ-ሃይማኖት — Student Attendance Sum / የተማሪ ድምር ውጤት'],
+    ['Range / ጊዜ: ' + periodLabel],
+    ['Generated / የተሰራበት: ' + generatedStamp],
+    [],
+    ['Student ID','ሙሉ ስም','ክፍል','Sessions','Present','Absent','Permission','Attendance %'],
+    ...summaryData.sort((a,b) => a.course.localeCompare(b.course) || a.name.localeCompare(b.name))
+      .map(r => [r.id, r.name, r.course, r.marked, r.present, r.absent, r.perm, r.pct+'%']),
+    [],
+    ['TOTAL / ጠቅላላ ድምር', '', '', grand.marked, grand.present, grand.absent, grand.perm, grandPct+'%'],
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:14},{wch:22},{wch:32},{wch:10},{wch:10},{wch:10},{wch:12},{wch:12}];
+  ws['!merges'] = [0,1,2].map(r => ({ s:{r,c:0}, e:{r,c:7} }));
+  XLSX.utils.book_append_sheet(wb, ws, 'Attendance Sum');
+
+  const pad = n => String(n).padStart(2,'0');
+  const now = new Date();
+  const stamp = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'_'+pad(now.getHours())+'-'+pad(now.getMinutes());
+  XLSX.writeFile(wb, `FH_Attendance_Sum_${stamp}.xlsx`);
+  showToast('📥 Attendance sum exported! / ወርዷል 📊');
+}
+
+// ── ATTENDANCE ALERTS: FLAG STUDENTS WITH 3+ CONSECUTIVE ABSENCES ──
+// Permission-excused sessions are skipped (don't count as absent, don't
+// reset the streak) — only genuinely unexplained absences count.
+async function computeAttendanceAlerts() {
+  await waitForFirebase();
+  const { collection, getDocs } = window._fsHelpers;
+  const snap = await getDocs(collection(window._db, 'attendance'));
+  const allDocs = snap.docs.map(d => d.data());
+
+  // studentId -> [{date, status}]
+  const byStudent = {};
+  allDocs.forEach(doc => {
+    (doc.records || []).forEach(r => {
+      if (!r.studentId) return;
+      if (!byStudent[r.studentId]) byStudent[r.studentId] = [];
+      byStudent[r.studentId].push({ date: doc.date, status: r.status });
+    });
+  });
+
+  const results = [];
+  students.forEach(s => {
+    const sessions = (byStudent[s.id] || []).slice().sort((a,b) => _attParseDate(b.date) - _attParseDate(a.date));
+    if (!sessions.length) return; // never marked — nothing to evaluate
+
+    let streak = 0, lastPresentDate = null;
+    for (const sess of sessions) {
+      if (sess.status === 'permission') continue; // excused — skip, doesn't break or extend streak
+      if (sess.status === 'absent') { streak++; continue; }
+      if (sess.status === 'present') { lastPresentDate = sess.date; break; }
+    }
+
+    const status = streak >= 3 ? 'Inactive' : 'Active';
+    results.push({
+      id: s.id, name: s.name, course: s.course,
+      streak, status, lastSessionDate: sessions[0].date, lastPresentDate,
+    });
+  });
+
+  results.sort((a,b) => b.streak - a.streak);
+  return results;
+}
+
+async function openAttendanceAlertsModal() {
+  openModal('attendance-alerts-modal');
+  const content = document.getElementById('attendance-alerts-content');
+  content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">⏳ Checking attendance records...</div>';
+
+  try {
+    const results = await computeAttendanceAlerts();
+    _lastAttendanceAlerts = results;
+    renderAttendanceAlerts(results);
+    _updateAttendanceAlertsBadge(results);
+  } catch (err) {
+    console.error('computeAttendanceAlerts error:', err);
+    content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger);">⚠ Could not check attendance: ' + err.message + '</div>';
+  }
+}
+
+let _lastAttendanceAlerts = [];
+
+function renderAttendanceAlerts(results) {
+  const inactive = results.filter(r => r.status === 'Inactive');
+  const content = document.getElementById('attendance-alerts-content');
+
+  if (!inactive.length) {
+    content.innerHTML = `
+      <div style="text-align:center;padding:24px;color:var(--success);font-size:15px;">
+        ✅ No students currently have 3+ consecutive absences. / ምንም ችግር የለም
+      </div>`;
+    return;
+  }
+
+  const rows = inactive.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td>${r.course}</td>
+      <td style="text-align:center;"><span style="background:var(--danger);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;">${r.streak}</span></td>
+      <td>${_attFmt(_attParseDate(r.lastSessionDate))}</td>
+      <td>${r.lastPresentDate ? _attFmt(_attParseDate(r.lastPresentDate)) : '—'}</td>
+    </tr>
+  `).join('');
+
+  content.innerHTML = `
+    <div style="margin-bottom:12px;font-size:14px;color:var(--crimson);font-weight:700;">
+      ⚠ ${inactive.length} student(s) flagged Inactive / ${inactive.length} ተማሪዎች ማንቂያ ተሰጥቷቸዋል
+    </div>
+    <div class="table-wrap" style="max-height:400px;overflow-y:auto;">
+      <table>
+        <thead><tr><th>Name / ስም</th><th>Class / ክፍል</th><th>Consecutive Absences</th><th>Last Session</th><th>Last Present</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <button class="btn-outline" style="margin-top:14px;" onclick="exportAttendanceAlerts()">📥 Export Alert List / ማንቂያ ዝርዝር አውርድ</button>
+  `;
+}
+
+function exportAttendanceAlerts() {
+  if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
+  const inactive = _lastAttendanceAlerts.filter(r => r.status === 'Inactive');
+  if (!inactive.length) { showToast('No alerts to export / ምንም ማንቂያ የለም'); return; }
+
+  const generatedStamp = new Date().toLocaleString('en-GB');
+  const rows = [
+    ['ፍሬ-ሃይማኖት — Attendance Alerts / የአቴንዳንስ ማንቂያ'],
+    ['Students absent 3+ sessions in a row (permission-excused sessions excluded)'],
+    ['Generated / የተሰራበት: ' + generatedStamp],
+    [],
+    ['Full Name / ሙሉ ስም', 'Class / ክፍል', 'Student ID', 'Consecutive Absences', 'Last Session Date', 'Last Present Date'],
+    ...inactive.map(r => [r.name, r.course, r.id, r.streak, _attFmt(_attParseDate(r.lastSessionDate)), r.lastPresentDate ? _attFmt(_attParseDate(r.lastPresentDate)) : 'Never']),
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:24},{wch:30},{wch:12},{wch:16},{wch:16},{wch:16}];
+  ws['!merges'] = [0,1,2].map(r => ({ s:{r,c:0}, e:{r,c:5} }));
+  XLSX.utils.book_append_sheet(wb, ws, 'Attendance Alerts');
+
+  const pad = n => String(n).padStart(2,'0');
+  const now = new Date();
+  const stamp = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'_'+pad(now.getHours())+'-'+pad(now.getMinutes());
+  XLSX.writeFile(wb, `FH_Attendance_Alerts_${stamp}.xlsx`);
+  showToast('📥 Alert list exported! / ወርዷል');
+}
+
+function _updateAttendanceAlertsBadge(results) {
+  const badge = document.getElementById('att-alerts-badge');
+  if (!badge) return;
+  const count = results.filter(r => r.status === 'Inactive').length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Quietly refresh the alert badge count whenever the Attendance page loads,
+// without opening the modal.
+async function _refreshAttendanceAlertsBadgeQuiet() {
+  try {
+    const results = await computeAttendanceAlerts();
+    _lastAttendanceAlerts = results;
+    _updateAttendanceAlertsBadge(results);
+  } catch (err) {
+    console.error('_refreshAttendanceAlertsBadgeQuiet error:', err);
+  }
+}
+
 async function extractImportFile() {
   const fileInput = document.getElementById('pdf-import-file');
   const file = fileInput.files[0];
@@ -2910,21 +3316,23 @@ async function extractImportFile() {
 // just name/class if the columns are present.
 const _importFieldPatterns = {
   christian:        /christian|baptism|ክርስትና/,
-  dob:              /dob|date of birth|birth ?date|ልደት|የትውልድ/,
+  dob:              /dob|date of birth|birth ?date|birthday|ልደት|የትውልድ/,
   age:              /^age$|ዕድሜ/,
   gender:           /gender|sex|ጾታ/,
-  phone:            /^phone$|mobile|ስልክ ቁ|^ስልክ$/,
+  phone:            /^phone$|phone ?number|mobile|contact|tel\b|ስልክ ቁ|^ስልክ$/,
+  address:          /^address$|home ?address|አድራሻ/,
   localchurch:      /local ?church|አጥቢያ/,
-  subcity:          /sub ?city|ክ\/ከተማ|ክፍለ ከተማ/,
+  subcity:          /sub[- ]?city|ክ\/ከተማ|ክፍለ ከተማ/,
   woreda:           /woreda|ወረዳ/,
+  kebele:           /kebele|ቀበሌ/,
   houseno:          /house ?no|house ?number|ቤት ቁ/,
-  fatherName:       /father'?s? name|የአባት ስም/,
+  fatherName:       /father'?s? name|^father$|የአባት ስም/,
   fatherChristian:  /father'?s? christian|የአባት ክርስትና/,
   fatherPhone:      /father'?s? phone|የአባት ስልክ/,
-  motherName:       /mother'?s? name|የእናት ስም/,
+  motherName:       /mother'?s? name|^mother$|የእናት ስም/,
   motherChristian:  /mother'?s? christian|የእናት ክርስትና/,
   motherPhone:      /mother'?s? phone|የእናት ስልክ/,
-  emergencyPhone:   /emergency|ድንገተኛ/,
+  emergencyPhone:   /emergency|guardian ?phone|ድንገተኛ/,
   memberSince:      /member since|registered|የተመዘገበበት/,
 };
 
@@ -2947,15 +3355,20 @@ async function extractExcelStudents(file) {
       const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false, defval: '' });
       if (!aoa.length) return;
 
-      // Try to find a header row (within the first 3 rows) that has a name-like
-      // and class-like column so we can map by column name rather than position.
+      // Try to find a header row (within the first 5 rows). A row counts as
+      // a header either because it has a clear "name" column, OR because it
+      // has 2+ recognizable field columns (age/phone/father name/address/etc.)
+      // — this way, personal/parent/address info still gets picked up even
+      // if the name-column wording doesn't match our regex.
       let headerRowIdx = -1, nameCol = -1, classCol = -1;
       const extraCols = {}; // fieldName -> column index
-      for (let r = 0; r < Math.min(3, aoa.length); r++) {
+      for (let r = 0; r < Math.min(5, aoa.length); r++) {
         const row = aoa[r].map(c => String(c).toLowerCase().trim());
         const nc = row.findIndex(c => /name|ስም|ሙሉ/.test(c) && !/father|mother|christian|አባት|እናት|ክርስትና/.test(c));
         const cc = row.findIndex(c => /class|course|ክፍል/.test(c));
-        if (nc !== -1) {
+        const fieldHits = Object.values(_importFieldPatterns).filter(pattern => row.some(c => pattern.test(c))).length;
+
+        if (nc !== -1 || fieldHits >= 2) {
           headerRowIdx = r; nameCol = nc; classCol = cc;
           Object.entries(_importFieldPatterns).forEach(([field, pattern]) => {
             const idx = row.findIndex(c => pattern.test(c));
@@ -2967,9 +3380,10 @@ async function extractExcelStudents(file) {
 
       let dataRows;
       if (headerRowIdx !== -1) {
+        if (nameCol === -1) nameCol = 0; // header row found via field hits, but no obvious name column — assume column A
         dataRows = aoa.slice(headerRowIdx + 1);
       } else {
-        // No recognizable header — assume column A = name, column B = class,
+        // No recognizable header at all — assume column A = name, column B = class,
         // and that this whole sheet belongs to one class (e.g. sheet named
         // after the class, or use the selected default).
         nameCol = 0; classCol = 1;
@@ -3088,14 +3502,17 @@ async function extractPdfStudents(file) {
 }
 
 const _importDetailFields = [
+  ['memberSince',"Member Since",'አባል ከሆነበት ቀን', 'date'],
   ['christian',"Christian Name",'ክርስትና ስም'],
   ['dob',"Date of Birth",'የትውልድ ቀን', 'date'],
   ['age',"Age",'ዕድሜ', 'number'],
   ['gender',"Gender",'ጾታ'],
   ['phone',"Phone",'ስልክ'],
+  ['address',"Address",'አድራሻ'],
   ['localchurch',"Local Church",'አጥቢያ'],
   ['subcity',"Sub-city",'ክፍለ ከተማ'],
   ['woreda',"Woreda",'ወረዳ'],
+  ['kebele',"Kebele",'ቀበሌ'],
   ['houseno',"House No",'ቤት ቁጥር'],
   ['fatherName',"Father's Name",'የአባት ስም'],
   ['fatherChristian',"Father's Christian Name",'የአባት ክርስትና ስም'],
@@ -3201,9 +3618,9 @@ async function registerPdfImportStudents() {
     const newStudent = {
       id: newId, memberSince, name, christian: row.christian || '', course: row.course,
       dob: row.dob || '', age: row.age ? (parseInt(row.age) || row.age) : '',
-      gender: row.gender || '', phone: row.phone || '',
+      gender: row.gender || '', phone: row.phone || '', address: row.address || '',
       localchurch: row.localchurch || '', subcity: row.subcity || '',
-      woreda: row.woreda || '', houseno: row.houseno || '',
+      woreda: row.woreda || '', kebele: row.kebele || '', houseno: row.houseno || '',
       fatherName: row.fatherName || '', fatherChristian: row.fatherChristian || '', fatherPhone: row.fatherPhone || '',
       motherName: row.motherName || '', motherChristian: row.motherChristian || '', motherPhone: row.motherPhone || '',
       emergencyPhone: row.emergencyPhone || '',
@@ -3550,7 +3967,8 @@ function _attTimestampSuffix() {
   return datePart + '_' + timePart;
 }
 
-async function exportAttendanceExcel(period) {
+async function exportAttendanceExcel(period, opts) {
+  opts = opts || {};
   period = period || 'monthly';
   if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
 
@@ -3573,13 +3991,20 @@ async function exportAttendanceExcel(period) {
     return;
   }
 
-  // Reference date = whatever is selected in the date picker, else today
+  // Reference date = forceDate if given (e.g. a one-click "today" download),
+  // else whatever is selected in the date picker, else today
   const pickerVal = document.getElementById('att-date')?.value;
-  const refDate = _attParseDate(pickerVal) || (() => { const t = new Date(); t.setHours(0,0,0,0); return t; })();
+  const refDate = opts.forceDate || _attParseDate(pickerVal) || (() => { const t = new Date(); t.setHours(0,0,0,0); return t; })();
 
   // Determine range [start, end] inclusive, based on period
   let start, end, periodLabel;
-  if (period === 'daily') {
+  if (period === 'custom') {
+    start = _attParseDate(opts.customStart);
+    end = _attParseDate(opts.customEnd);
+    if (!start || !end) { showToast('Please pick both a start and end date / እባክዎ ሁለቱንም ቀናት ይምረጡ'); return; }
+    if (start > end) { const tmp = start; start = end; end = tmp; }
+    periodLabel = 'Custom / ብጁ — ' + _attFmt(start) + ' to ' + _attFmt(end);
+  } else if (period === 'daily') {
     start = new Date(refDate); end = new Date(refDate);
     periodLabel = 'Daily / ዕለታዊ — ' + _attFmt(refDate);
   } else if (period === 'weekly') {
@@ -3597,11 +4022,24 @@ async function exportAttendanceExcel(period) {
   }
 
   // Filter docs whose date falls within range
-  const filtered = allDocs.filter(rec => {
+  let filtered = allDocs.filter(rec => {
     const d = _attParseDate(rec.date);
     if (!d) return false;
     return d >= start && d <= end;
-  }).sort((a,b) => _attParseDate(a.date) - _attParseDate(b.date));
+  });
+
+  // Optional weekday filter (e.g. only Sundays, or only Saturdays+Sundays)
+  if (opts.weekdays && opts.weekdays.length && opts.weekdays.length < 7) {
+    const weekdaySet = new Set(opts.weekdays);
+    filtered = filtered.filter(rec => {
+      const d = _attParseDate(rec.date);
+      return d && weekdaySet.has(d.getDay());
+    });
+    const weekdayNamesFull = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    periodLabel += ' (' + opts.weekdays.map(w => weekdayNamesFull[w]).join(', ') + ' only)';
+  }
+
+  filtered.sort((a,b) => _attParseDate(a.date) - _attParseDate(b.date));
 
   if (!filtered.length) {
     showToast('No attendance records found for this ' + period + ' period / ለዚህ ጊዜ መዝገብ የለም');
@@ -3639,6 +4077,33 @@ async function exportAttendanceExcel(period) {
     const pts = present + perm*0.5;
     const avgPct = total ? (pts/total*100).toFixed(1) : '0.0';
     overviewRows.push([cls, clsDocs.length, total, present, absent, perm, avgPct+'%']);
+  });
+
+  // ── Sessions by Day of Week (e.g. total number of Sundays, Saturdays, etc.) ──
+  const weekdayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const byWeekday = weekdayNames.map(() => ({ sessions: new Set(), present: 0, absent: 0, perm: 0, total: 0 }));
+  filtered.forEach(doc => {
+    const d = _attParseDate(doc.date);
+    if (!d) return;
+    const wd = byWeekday[d.getDay()];
+    wd.sessions.add(doc.date);
+    (doc.records || []).forEach(r => {
+      wd.total++;
+      if (r.status === 'present') wd.present++;
+      else if (r.status === 'absent') wd.absent++;
+      else if (r.status === 'permission') wd.perm++;
+    });
+  });
+
+  overviewRows.push([]);
+  overviewRows.push(['Sessions by Day of Week / በሳምንት ቀናት የተከፋፈለ']);
+  overviewRows.push(['Day / ቀን','Number of Sessions / የቀናት ብዛት','Present / ተገኝቷል','Absent / አልተገኘም','Permission / ፈቃድ','Avg %']);
+  weekdayNames.forEach((wdName, i) => {
+    const wd = byWeekday[i];
+    if (wd.sessions.size === 0) return; // skip weekdays with no sessions in this period
+    const pts = wd.present + wd.perm*0.5;
+    const avgPct = wd.total ? (pts/wd.total*100).toFixed(1) : '0.0';
+    overviewRows.push([wdName, wd.sessions.size, wd.present, wd.absent, wd.perm, avgPct+'%']);
   });
 
   const wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
@@ -4094,6 +4559,57 @@ function monitorTickStudent(idx, btn) {
 
 // Override buildAttList to render 3-button point-scored roll-call for all non-student roles
 const _origBuildAttList = typeof buildAttList === 'function' ? buildAttList : null;
+
+function downloadCurrentAttendanceRoll() {
+  if (typeof XLSX === 'undefined') { showToast('Excel library loading... retry / ቆይ ዳግም ሞክር'); return; }
+
+  const course = document.getElementById('att-course')?.value || '';
+  const dateVal = document.getElementById('att-date')?.value || new Date().toISOString().slice(0,10);
+  const list = students.filter(s => !course || s.course === course);
+
+  if (!list.length) { showToast('No students in this class / በዚህ ክፍል ተማሪ የለም'); return; }
+
+  const statusLabel = { present: 'Present / ተገኝቷል', absent: 'Absent / አልተገኘም', permission: 'Permission / ፈቃድ' };
+  const dateObj = _attParseDate(dateVal);
+  const dateDisplay = dateObj ? _attFmt(dateObj) : dateVal;
+  const generatedStamp = new Date().toLocaleString('en-GB');
+
+  let present=0, absent=0, perm=0, unmarked=0;
+  const dataRows = list.map((s, i) => {
+    const state = rollState[i] || null;
+    if (state === 'present') present++;
+    else if (state === 'absent') absent++;
+    else if (state === 'permission') perm++;
+    else unmarked++;
+    return [i+1, s.name, s.christian || '', s.id, state ? statusLabel[state] : 'Not marked yet / አልተመዘገበም'];
+  });
+
+  const sheetData = [
+    ['ፍሬ-ሃይማኖት — Attendance Roll / የአቴንዳንስ ዝርዝር'],
+    ['Class / ክፍል: ' + (course || 'All Classes / ሁሉም ክፍሎች')],
+    ['Date / ቀን: ' + dateDisplay],
+    ['Generated / የተሰራበት: ' + generatedStamp],
+    ['Present: ' + present + '  |  Absent: ' + absent + '  |  Permission: ' + perm + '  |  Not marked: ' + unmarked],
+    [],
+    ['#', 'Full Name / ሙሉ ስም', 'Christian Name / ክርስትና ስም', 'Student ID', 'Status / ሁኔታ'],
+    ...dataRows,
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+  ws['!cols'] = [{wch:5},{wch:26},{wch:18},{wch:14},{wch:26}];
+  ws['!merges'] = [0,1,2,3,4].map(r => ({ s:{r,c:0}, e:{r,c:4} }));
+
+  const wb = XLSX.utils.book_new();
+  const sheetName = (course || 'All Classes').replace(/[\\/:?*\[\]]/g,'').slice(0,30);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const pad = n => String(n).padStart(2,'0');
+  const now = new Date();
+  const stamp = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'_'+pad(now.getHours())+'-'+pad(now.getMinutes());
+  const classTag = (course || 'AllClasses').replace(/[^\w]+/g,'_');
+  XLSX.writeFile(wb, `FH_Attendance_${classTag}_${dateVal}_${stamp}.xlsx`);
+  showToast('📥 Roll downloaded! / ወርዷል');
+}
 
 function buildAttList() {
   const course = document.getElementById('att-course')?.value;
@@ -4675,8 +5191,10 @@ function openEditStudent(id) {
   set('es-phone',       s.phone);
   set('es-member-since',s.memberSince);
   set('es-localchurch', s.localchurch);
+  set('es-address',     s.address);
   set('es-subcity',     s.subcity);
   set('es-woreda',      s.woreda);
+  set('es-kebele',      s.kebele);
   set('es-houseno',     s.houseno);
   set('es-father-name', s.fatherName);
   set('es-father-christian', s.fatherChristian);
@@ -4758,8 +5276,10 @@ function saveEditStudent() {
     memberSince:       get('es-member-since')     || students[idx].memberSince,
     localchurch:       get('es-localchurch'),
     course,
+    address:           get('es-address'),
     subcity:           get('es-subcity'),
     woreda:            get('es-woreda'),
+    kebele:            get('es-kebele'),
     houseno:           get('es-houseno'),
     fatherName:        get('es-father-name'),
     fatherChristian:   get('es-father-christian'),
@@ -4810,8 +5330,10 @@ function downloadSingleStudentPDF(id) {
     `Local Church / አጥቢያ   : ${s.localchurch || '—'}`,
     '',
     '── ADDRESS / አድራሻ ────────────────────────────',
+    `Address / አድራሻ        : ${s.address || '—'}`,
     `Sub-City / ክፍለ ከተማ    : ${s.subcity || '—'}`,
     `Woreda / ወረዳ           : ${s.woreda || '—'}`,
+    `Kebele / ቀበሌ           : ${s.kebele || '—'}`,
     `House No / የቤት ቁጥር    : ${s.houseno || '—'}`,
     '',
     '── PARENT / GUARDIAN — ወላጅ / አሳዳጊ ───────────',
@@ -4875,7 +5397,7 @@ function downloadAllStudentsFullInfo() {
   const fullHeaders = [
     'Student ID','Full Name','Christian Name','Class',
     'Date of Birth','Age','Gender','Phone','Member Since','Local Church',
-    'Sub-City','Woreda','House No',
+    'Address','Sub-City','Woreda','Kebele','House No',
     'Father Name','Father Chr. Name','Father Phone',
     'Mother Name','Mother Chr. Name','Mother Phone','Emergency Phone',
     'Attendance %','Grade','Midterm','Final','Assignment','Status'
@@ -4886,7 +5408,7 @@ function downloadAllStudentsFullInfo() {
       s.id, s.name, s.christian||'', s.course,
       s.dob||'', s.age||'', s.gender||'', s.phone||'',
       s.memberSince||'', s.localchurch||'',
-      s.subcity||'', s.woreda||'', s.houseno||'',
+      s.address||'', s.subcity||'', s.woreda||'', s.kebele||'', s.houseno||'',
       s.fatherName||'', s.fatherChristian||'', s.fatherPhone||'',
       s.motherName||'', s.motherChristian||'', s.motherPhone||'',
       s.emergencyPhone||'',
@@ -4987,8 +5509,10 @@ function downloadAllStudentsFullInfo() {
 
     <div style="font-family:'Cinzel',serif;font-size:10px;font-weight:700;color:var(--crimson);text-transform:uppercase;letter-spacing:0.1em;padding:14px 0 6px;border-bottom:1.5px solid var(--parchment-dd);margin-bottom:14px">📍 Address / አድራሻ</div>
     <div class="form-grid">
+      <div class="field-group"><label>Address <span class="amh-lbl">አድራሻ</span></label><input type="text" id="es-address"></div>
       <div class="field-group"><label>Sub-City <span class="amh-lbl">ክፍለ ከተማ</span></label><input type="text" id="es-subcity"></div>
       <div class="field-group"><label>Woreda <span class="amh-lbl">ወረዳ</span></label><input type="text" id="es-woreda"></div>
+      <div class="field-group"><label>Kebele <span class="amh-lbl">ቀበሌ</span></label><input type="text" id="es-kebele"></div>
       <div class="field-group"><label>House No <span class="amh-lbl">የቤት ቁጥር</span></label><input type="text" id="es-houseno"></div>
     </div>
 
